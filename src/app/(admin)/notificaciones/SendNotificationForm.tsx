@@ -71,10 +71,18 @@ export default function SendNotificationForm({ usuarios, eventos, previas }: Pro
     return u?.username ?? u?.email ?? id;
   };
 
-  function handleTipoChange(v: string) {
+  function handleTipoChange(v: string | null) {
     setTipo(v ?? "sistema");
     setReferenceId("");
     setEmisorId("");
+  }
+
+  function handleReferenceChange(v: string | null) {
+    setReferenceId(v ?? "");
+  }
+
+  function handleEmisorChange(v: string | null) {
+    setEmisorId(v ?? "");
   }
 
   async function handleSend(e: React.FormEvent) {
@@ -256,7 +264,7 @@ export default function SendNotificationForm({ usuarios, eventos, previas }: Pro
       {(tipo === "invitacion_fiesta" || tipo === "invitacion") && (
         <div className="space-y-1.5">
           <Label>Evento / Fiesta</Label>
-          <Select value={referenceId} onValueChange={setReferenceId}>
+          <Select value={referenceId} onValueChange={handleReferenceChange}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona un evento..." />
             </SelectTrigger>
@@ -279,7 +287,7 @@ export default function SendNotificationForm({ usuarios, eventos, previas }: Pro
       {tipo === "invitacion_previa" && (
         <div className="space-y-1.5">
           <Label>Previa</Label>
-          <Select value={referenceId} onValueChange={setReferenceId}>
+          <Select value={referenceId} onValueChange={handleReferenceChange}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona una previa..." />
             </SelectTrigger>
@@ -297,7 +305,7 @@ export default function SendNotificationForm({ usuarios, eventos, previas }: Pro
       {(tipo === "amistad" || tipo === "amistad_aceptada") && (
         <div className="space-y-1.5">
           <Label>{tipo === "amistad" ? "Usuario que envía la solicitud" : "Usuario que aceptó"}</Label>
-          <Select value={emisorId} onValueChange={setEmisorId}>
+          <Select value={emisorId} onValueChange={handleEmisorChange}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona un usuario..." />
             </SelectTrigger>
