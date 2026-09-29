@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { usuarioAdmin } from "@/lib/auth/admin";
 import Sidebar from "@/components/layout/Sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -8,20 +9,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_admin) redirect("/login");
+  if (!(await usuarioAdmin())) redirect("/login");
 
   // Entradas de Fourvenues pendientes de revisar (las apunta el robot de ventas).
   const { count: discrepancias } = await createAdminClient()

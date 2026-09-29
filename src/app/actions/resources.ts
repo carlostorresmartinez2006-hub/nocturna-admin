@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -22,6 +23,7 @@ type BarPayload = {
 };
 
 export async function upsertBar(payload: BarPayload): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { id, ...data } = payload;
   if (id) {
@@ -35,6 +37,7 @@ export async function upsertBar(payload: BarPayload): Promise<void> {
 }
 
 export async function deleteBar(id: string): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("bares").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -61,6 +64,7 @@ type LocalPayload = {
 };
 
 export async function upsertLocal(payload: LocalPayload): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { id, ...data } = payload;
   if (id) {
@@ -74,6 +78,7 @@ export async function upsertLocal(payload: LocalPayload): Promise<void> {
 }
 
 export async function deleteLocal(id: string): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("locales").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -98,6 +103,7 @@ type EventoPayload = {
 };
 
 export async function upsertEvento(payload: EventoPayload): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { id, ...data } = payload;
   if (id) {
@@ -111,6 +117,7 @@ export async function upsertEvento(payload: EventoPayload): Promise<void> {
 }
 
 export async function deleteEvento(id: string): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("eventos").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -134,6 +141,7 @@ type PuntoInteresPayload = {
 };
 
 export async function upsertPuntoInteres(payload: PuntoInteresPayload): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { id, ...data } = payload;
   if (id) {
@@ -147,6 +155,7 @@ export async function upsertPuntoInteres(payload: PuntoInteresPayload): Promise<
 }
 
 export async function deletePuntoInteres(id: string): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("puntos_interes").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -165,6 +174,7 @@ type DestacadoPayload = {
 };
 
 export async function upsertDestacado(payload: DestacadoPayload): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { id, ...data } = payload;
   if (id) {
@@ -178,6 +188,7 @@ export async function upsertDestacado(payload: DestacadoPayload): Promise<void> 
 }
 
 export async function deleteDestacado(id: string): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("destacados").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -187,6 +198,7 @@ export async function deleteDestacado(id: string): Promise<void> {
 // --- BULK DELETES ---
 
 export async function deleteBares(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("bares").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -194,6 +206,7 @@ export async function deleteBares(ids: string[]): Promise<void> {
 }
 
 export async function deleteLocales(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("locales").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -201,6 +214,7 @@ export async function deleteLocales(ids: string[]): Promise<void> {
 }
 
 export async function deleteEventos(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("eventos").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -208,6 +222,7 @@ export async function deleteEventos(ids: string[]): Promise<void> {
 }
 
 export async function deletePuntosInteres(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("puntos_interes").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -215,6 +230,7 @@ export async function deletePuntosInteres(ids: string[]): Promise<void> {
 }
 
 export async function deleteDestacados(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("destacados").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -222,6 +238,7 @@ export async function deleteDestacados(ids: string[]): Promise<void> {
 }
 
 export async function deleteNotificaciones(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("notificaciones").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -229,6 +246,7 @@ export async function deleteNotificaciones(ids: string[]): Promise<void> {
 }
 
 export async function deleteUsuarios(ids: string[]): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   for (const id of ids) {
     const { error } = await supabase.auth.admin.deleteUser(id);
@@ -249,6 +267,7 @@ type ProfileUpdatePayload = {
 };
 
 export async function updateProfile(payload: ProfileUpdatePayload): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { id, ...data } = payload;
   const { error } = await supabase.from("profiles").update(data).eq("id", id);

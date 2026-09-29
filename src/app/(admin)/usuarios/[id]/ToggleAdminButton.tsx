@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { setAdmin } from "@/app/actions/users";
 import { Button } from "@/components/ui/button";
 import { Shield, ShieldOff, Loader2 } from "lucide-react";
 
@@ -18,11 +18,11 @@ export default function ToggleAdminButton({
 
   async function toggle() {
     setLoading(true);
-    const supabase = createClient();
-    await supabase
-      .from("profiles")
-      .update({ is_admin: !currentIsAdmin })
-      .eq("id", userId);
+    try {
+      await setAdmin(userId, !currentIsAdmin);
+    } catch (e) {
+      alert((e as Error).message);
+    }
     router.refresh();
     setLoading(false);
   }

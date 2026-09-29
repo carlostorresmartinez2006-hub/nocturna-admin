@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -26,6 +27,7 @@ const DEFAULT_RANKING_CONFIG: RankingConfig = {
 };
 
 export async function getRankingConfig(): Promise<RankingConfig> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("ranking_config")
@@ -38,6 +40,7 @@ export async function getRankingConfig(): Promise<RankingConfig> {
 }
 
 export async function updateRankingConfig(config: RankingConfig): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("ranking_config").upsert({
     id: 1,
