@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 
 type Folder = "bares" | "locales" | "eventos" | "puntos_interes" | "avatars";
@@ -8,6 +9,7 @@ export async function createSignedUploadUrl(
   folder: Folder,
   filename: string
 ): Promise<{ signedUrl: string; publicUrl: string }> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
   const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;

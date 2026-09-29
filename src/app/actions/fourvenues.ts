@@ -1,10 +1,12 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 // Marca una discrepancia como revisada sin hacer nada más.
 export async function resolverDiscrepancia(id: number): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from("fourvenues_discrepancias").update({ resuelta: true }).eq("id", id);
   if (error) throw new Error(error.message);
@@ -15,6 +17,7 @@ export async function resolverDiscrepancia(id: number): Promise<void> {
 // Da por buena una entrada que el robot no verificó (p. ej. el nombre no coincidía):
 // la asigna al usuario de la discrepancia y la marca como resuelta.
 export async function verificarDiscrepancia(id: number): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
   const { data: d, error: errD } = await supabase
     .from("fourvenues_discrepancias")

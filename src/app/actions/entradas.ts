@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -9,6 +10,7 @@ export async function addEntrada(data: {
   nombreTicket?: string | null;
   emailTicket?: string | null;
 }): Promise<void> {
+  await requireAdmin();
   const supabase = await createAdminClient();
   const { error } = await supabase.from("entradas").insert({
     user_id: data.userId,
@@ -24,6 +26,7 @@ export async function addEntrada(data: {
 }
 
 export async function deleteEntrada(entradaId: string, userId?: string): Promise<void> {
+  await requireAdmin();
   const supabase = await createAdminClient();
   const { error } = await supabase.from("entradas").delete().eq("id", entradaId);
   if (error) throw new Error(error.message);
@@ -33,6 +36,7 @@ export async function deleteEntrada(entradaId: string, userId?: string): Promise
 }
 
 export async function deleteEntradas(ids: string[]): Promise<void> {
+  await requireAdmin();
   if (ids.length === 0) return;
   const supabase = await createAdminClient();
   const { error } = await supabase.from("entradas").delete().in("id", ids);
