@@ -210,6 +210,84 @@ export type Database = {
         }
         Relationships: []
       }
+      fourvenues_discrepancias: {
+        Row: {
+          codigo: string
+          created_at: string
+          detalle: Json
+          evento_id: string | null
+          id: number
+          resuelta: boolean
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          detalle?: Json
+          evento_id?: string | null
+          id?: never
+          resuelta?: boolean
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          detalle?: Json
+          evento_id?: string | null
+          id?: never
+          resuelta?: boolean
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fourvenues_ventas: {
+        Row: {
+          anulada: boolean
+          codigo: string
+          cuenta: string
+          email: string | null
+          estado: string | null
+          evento_id: string | null
+          evento_inicio: string | null
+          fv_evento_id: string
+          nombre: string | null
+          telefono: string | null
+          vendida_at: string | null
+          visto_at: string
+        }
+        Insert: {
+          anulada?: boolean
+          codigo: string
+          cuenta: string
+          email?: string | null
+          estado?: string | null
+          evento_id?: string | null
+          evento_inicio?: string | null
+          fv_evento_id: string
+          nombre?: string | null
+          telefono?: string | null
+          vendida_at?: string | null
+          visto_at?: string
+        }
+        Update: {
+          anulada?: boolean
+          codigo?: string
+          cuenta?: string
+          email?: string | null
+          estado?: string | null
+          evento_id?: string | null
+          evento_inicio?: string | null
+          fv_evento_id?: string
+          nombre?: string | null
+          telefono?: string | null
+          vendida_at?: string | null
+          visto_at?: string
+        }
+        Relationships: []
+      }
       eventos: {
         Row: {
           created_at: string | null
