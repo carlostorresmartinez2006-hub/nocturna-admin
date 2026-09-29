@@ -18,6 +18,7 @@ import {
   Trophy,
   Compass,
   Ticket,
+  Radar,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/usuarios", label: "Usuarios", icon: Users },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/entradas", label: "Entradas", icon: Ticket },
+  { href: "/fourvenues", label: "Fourvenues", icon: Radar },
   { href: "/eventos", label: "Eventos", icon: CalendarDays },
   { href: "/locales", label: "Locales", icon: MapPin },
   { href: "/bares", label: "Bares", icon: Wine },
@@ -41,7 +43,8 @@ const navItems = [
   { href: "/moderacion", label: "Moderación", icon: ShieldAlert },
 ];
 
-export default function Sidebar() {
+// avisos: número de cosas pendientes por sección (p. ej. { "/fourvenues": 2 }).
+export default function Sidebar({ avisos = {} }: { avisos?: Record<string, number> }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -82,7 +85,13 @@ export default function Sidebar() {
             >
               <Icon className={cn("w-4 h-4 shrink-0", active && "text-primary")} />
               <span className="truncate">{label}</span>
-              {active && <ChevronRight className="w-3 h-3 ml-auto text-primary/60" />}
+              {avisos[href] ? (
+                <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-black text-[11px] font-bold flex items-center justify-center">
+                  {avisos[href]}
+                </span>
+              ) : (
+                active && <ChevronRight className="w-3 h-3 ml-auto text-primary/60" />
+              )}
             </Link>
           );
         })}
