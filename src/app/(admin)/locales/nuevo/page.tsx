@@ -1,9 +1,11 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LocalForm from "@/components/layout/LocalForm";
 
-export default function NuevoLocalPage() {
+export default async function NuevoLocalPage() {
+  await asegurarAdmin();
   return (
     <div className="p-8 space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">

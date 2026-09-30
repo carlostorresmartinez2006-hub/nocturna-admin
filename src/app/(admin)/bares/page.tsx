@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Wine, Plus } from "lucide-react";
 import BaresGrid from "./BaresGrid";
 
 export default async function BaresPage() {
+  await asegurarAdmin();
   const supabase = createAdminClient();
   const { data: bares } = await supabase
     .from("bares")

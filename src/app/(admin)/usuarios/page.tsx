@@ -1,8 +1,10 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Users } from "lucide-react";
 import UsuariosTable from "./UsuariosTable";
 
 export default async function UsuariosPage() {
+  await asegurarAdmin();
   const supabase = await createAdminClient();
   const { data: usuarios } = await supabase
     .from("profiles")

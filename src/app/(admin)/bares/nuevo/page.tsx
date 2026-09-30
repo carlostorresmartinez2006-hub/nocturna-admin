@@ -1,9 +1,11 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import Link from "next/link";
 import { ArrowLeft, Wine } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import BarForm from "@/components/layout/BarForm";
 
-export default function NuevoBarPage() {
+export default async function NuevoBarPage() {
+  await asegurarAdmin();
   return (
     <div className="p-8 space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">

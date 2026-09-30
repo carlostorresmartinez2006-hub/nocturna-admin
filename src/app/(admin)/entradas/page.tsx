@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Ticket } from "lucide-react";
 import EntradaTable from "./EntradaTable";
@@ -15,6 +16,7 @@ type EntradaWithRelations = {
 };
 
 export default async function EntradasPage() {
+  await asegurarAdmin();
   const supabase = createAdminClient();
 
   const [

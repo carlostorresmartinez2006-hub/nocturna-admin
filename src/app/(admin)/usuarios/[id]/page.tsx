@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -13,6 +14,7 @@ import EditProfileForm from "./EditProfileForm";
 import ManageFriendsSection from "./ManageFriendsSection";
 
 export default async function UsuarioDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await asegurarAdmin();
   const { id } = await params;
   const supabase = createAdminClient();
 

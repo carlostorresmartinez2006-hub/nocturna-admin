@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { enviarNotificaciones } from "@/app/actions/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,20 +89,14 @@ export default function SendNotificationForm({ usuarios, eventos, previas }: Pro
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
-    const supabase = createClient();
     const finalTipo = tipo === "personalizar" ? customTipo : tipo;
     const targets = targetMode === "all" ? usuarios.map((u) => u.id) : selectedIds;
-    if (targets.length > 0) {
-      await supabase.from("notificaciones").insert(
-        targets.map((user_id) => ({
-          user_id,
-          tipo: finalTipo,
-          mensaje,
-          leida: false,
-          reference_id: referenceId || null,
-          emisor_id: emisorId || null,
-        }))
-      );
+    try {
+      await enviarNotificaciones({ userIds: targets, tipo: finalTipo, mensaje, referenceId, emisorId });
+    } catch (err) {
+      alert((err as Error).message);
+      setLoading(false);
+      return;
     }
     setMensaje("");
     setSelectedIds([]);

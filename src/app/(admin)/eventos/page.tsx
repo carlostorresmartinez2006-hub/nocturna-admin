@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { CalendarDays, Plus } from "lucide-react";
@@ -5,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import EventosTable from "./EventosTable";
 
 export default async function EventosPage() {
+  await asegurarAdmin();
   const supabase = await createAdminClient();
   const { data: eventos } = await supabase
     .from("eventos")

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 // Id del usuario de la sesión si es administrador; null si no hay sesión o no lo es.
@@ -23,5 +24,13 @@ export async function usuarioAdmin(): Promise<string | null> {
 export async function requireAdmin(): Promise<string> {
   const id = await usuarioAdmin();
   if (!id) throw new Error("No autorizado");
+  return id;
+}
+
+// Para las páginas: el layout no basta, porque Next puede renderizar una página sin volver a
+// ejecutar el layout (navegación en cliente / RSC). Cada página que lea datos lo llama primero.
+export async function asegurarAdmin(): Promise<string> {
+  const id = await usuarioAdmin();
+  if (!id) redirect("/login");
   return id;
 }

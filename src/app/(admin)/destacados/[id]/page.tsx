@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DestacadoForm from "@/components/layout/DestacadoForm";
 
 export default async function EditDestacadoPage({ params }: { params: Promise<{ id: string }> }) {
+  await asegurarAdmin();
   const { id } = await params;
   const supabase = createAdminClient();
 

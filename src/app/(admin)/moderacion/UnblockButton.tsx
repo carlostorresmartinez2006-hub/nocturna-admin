@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { quitarRelacionModeracion } from "@/app/actions/users";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2 } from "lucide-react";
 
@@ -12,8 +12,11 @@ export default function UnblockButton({ id, table }: { id: string; table: "bloqu
 
   async function handleRemove() {
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from(table).delete().eq("id", id);
+    try {
+      await quitarRelacionModeracion(table, id);
+    } catch (e) {
+      alert((e as Error).message);
+    }
     router.refresh();
     setLoading(false);
   }

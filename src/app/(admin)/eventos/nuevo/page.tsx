@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays } from "lucide-react";
@@ -6,6 +7,7 @@ import EventoForm from "@/components/layout/EventoForm";
 
 
 export default async function NuevoEventoPage() {
+  await asegurarAdmin();
   const supabase = await createAdminClient();
   const { data: locales } = await supabase
     .from("locales")
