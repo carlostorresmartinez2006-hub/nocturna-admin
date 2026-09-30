@@ -269,7 +269,9 @@ type ProfileUpdatePayload = {
 export async function updateProfile(payload: ProfileUpdatePayload): Promise<void> {
   await requireAdmin();
   const supabase = createAdminClient();
-  const { id, ...data } = payload;
+  // Solo los campos editables del formulario: is_admin / is_banned tienen sus propias acciones.
+  const { id, username, full_name, age, instagram_handle, avatar_url } = payload;
+  const data = { username, full_name, age, instagram_handle, avatar_url };
   const { error } = await supabase.from("profiles").update(data).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/usuarios/${id}`);

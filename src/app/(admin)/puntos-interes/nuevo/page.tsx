@@ -1,9 +1,11 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import Link from "next/link";
 import { ArrowLeft, Compass } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PuntoInteresForm from "@/components/layout/PuntoInteresForm";
 
-export default function NuevoPuntoPage() {
+export default async function NuevoPuntoPage() {
+  await asegurarAdmin();
   return (
     <div className="p-8 space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">

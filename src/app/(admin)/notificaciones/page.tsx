@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell } from "lucide-react";
@@ -5,6 +6,7 @@ import SendNotificationForm from "./SendNotificationForm";
 import NotificacionesTable from "./NotificacionesTable";
 
 export default async function NotificacionesPage() {
+  await asegurarAdmin();
   const supabase = createAdminClient();
 
   const { data: notifs } = await supabase

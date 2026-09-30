@@ -138,3 +138,37 @@ export async function setAdmin(userId: string, isAdmin: boolean): Promise<void> 
 export async function soyAdmin(): Promise<boolean> {
   return (await usuarioAdmin()) !== null;
 }
+
+// Moderación: quita un bloqueo o silencio concreto (por id de la fila).
+export async function quitarRelacionModeracion(table: "bloqueados" | "silenciados", id: string): Promise<void> {
+  await requireAdmin();
+  if (table !== "bloqueados" && table !== "silenciados") throw new Error("Tabla no válida");
+  const supabase = createAdminClient();
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/moderacion");
+}
+
+export async function enviarNotificaciones(data: {
+  userIds: string[];
+  tipo: string;
+  mensaje: string;
+  referenceId?: string | null;
+  emisorId?: string | null;
+}): Promise<void> {
+  await requireAdmin();
+  if (data.userIds.length === 0) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("notificaciones").insert(
+    data.userIds.map((user_id) => ({
+      user_id,
+      tipo: data.tipo,
+      mensaje: data.mensaje,
+      leida: false,
+      reference_id: data.referenceId || null,
+      emisor_id: data.emisorId || null,
+    }))
+  );
+  if (error) throw new Error(error.message);
+  revalidatePath("/notificaciones");
+}

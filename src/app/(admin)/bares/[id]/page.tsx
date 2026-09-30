@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import BarForm from "@/components/layout/BarForm";
 
 export default async function EditBarPage({ params }: { params: Promise<{ id: string }> }) {
+  await asegurarAdmin();
   const { id } = await params;
   const supabase = await createAdminClient();
   const { data: bar } = await supabase.from("bares").select("*").eq("id", id).single();

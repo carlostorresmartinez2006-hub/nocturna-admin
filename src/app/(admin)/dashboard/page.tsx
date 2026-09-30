@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Users, CalendarDays, MapPin, Wine, Ban, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +54,7 @@ const statCards = (stats: Awaited<ReturnType<typeof getStats>>) => [
 ];
 
 export default async function DashboardPage() {
+  await asegurarAdmin();
   const stats = await getStats();
   const cards = statCards(stats);
 

@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { MapPin, Plus } from "lucide-react";
 import LocalesGrid from "./LocalesGrid";
 
 export default async function LocalesPage() {
+  await asegurarAdmin();
   const supabase = await createAdminClient();
   const { data: locales } = await supabase
     .from("locales")

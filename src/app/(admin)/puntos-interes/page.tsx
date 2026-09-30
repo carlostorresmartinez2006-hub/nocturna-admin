@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Compass, Plus } from "lucide-react";
 import PuntosInteresTable from "./PuntosInteresTable";
 
 export default async function PuntosInteresPage() {
+  await asegurarAdmin();
   const supabase = await createAdminClient();
   const { data: puntos } = await supabase
     .from("puntos_interes")

@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ function haceCuanto(iso: string | null) {
 const inicioProximos = () => new Date(Date.now() - 12 * 3600 * 1000).toISOString();
 
 export default async function FourvenuesPage() {
+  await asegurarAdmin();
   const supabase = createAdminClient();
   const desde = inicioProximos();
 

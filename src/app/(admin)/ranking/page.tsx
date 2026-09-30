@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Trophy } from "lucide-react";
 import RankingClient from "./RankingClient";
@@ -5,6 +6,7 @@ import ScoringConfigSection from "./ScoringConfigSection";
 import { getRankingConfig } from "@/app/actions/ranking-config";
 
 export default async function RankingPage() {
+  await asegurarAdmin();
   const supabase = createAdminClient();
 
   const ninetyDaysAgo = new Date();

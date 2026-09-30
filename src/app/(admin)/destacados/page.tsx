@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Star, Plus } from "lucide-react";
 import DestacadosGrid from "./DestacadosGrid";
 
 export default async function DestacadosPage() {
+  await asegurarAdmin();
   const supabase = await createAdminClient();
   const { data: destacados, error } = await supabase
     .from("destacados")

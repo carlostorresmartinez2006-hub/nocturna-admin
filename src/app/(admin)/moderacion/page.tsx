@@ -1,3 +1,4 @@
+import { asegurarAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Ban, ShieldAlert, UserX, VolumeX } from "lucide-react";
@@ -7,6 +8,7 @@ import AdminToggleButton from "./AdminToggleButton";
 import AdminBanUserForm from "./AdminBanUserForm";
 
 export default async function ModeracionPage() {
+  await asegurarAdmin();
   const supabase = createAdminClient();
 
   const [
