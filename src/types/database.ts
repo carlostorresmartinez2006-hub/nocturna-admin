@@ -210,6 +210,39 @@ export type Database = {
         }
         Relationships: []
       }
+      denuncias: {
+        Row: {
+          created_at: string
+          denunciado_id: string
+          denunciante_id: string
+          detalle: string | null
+          estado: string
+          id: string
+          motivo: string
+          revisada_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          denunciado_id: string
+          denunciante_id: string
+          detalle?: string | null
+          estado?: string
+          id?: string
+          motivo: string
+          revisada_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          denunciado_id?: string
+          denunciante_id?: string
+          detalle?: string | null
+          estado?: string
+          id?: string
+          motivo?: string
+          revisada_at?: string | null
+        }
+        Relationships: []
+      }
       fourvenues_discrepancias: {
         Row: {
           codigo: string
@@ -689,6 +722,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ranking_denuncias: {
+        Args: { p_limite?: number }
+        Returns: {
+          avatar_url: string | null
+          denunciantes: number
+          full_name: string | null
+          is_banned: boolean
+          motivos: Json
+          pendientes: number
+          total: number
+          ultima: string
+          user_id: string
+          username: string | null
+        }[]
+      }
       get_auth_provider: { Args: { user_email: string }; Returns: string }
       get_friends_count: { Args: { target_user_id: string }; Returns: number }
       get_friends_of_user: {

@@ -19,6 +19,7 @@ import {
   Compass,
   Ticket,
   Radar,
+  Flag,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const navItems = [
   { href: "/puntos-interes", label: "Puntos de interés", icon: Compass },
   { href: "/destacados", label: "Destacados", icon: Star },
   { href: "/notificaciones", label: "Notificaciones", icon: Bell },
+  { href: "/denuncias", label: "Denuncias", icon: Flag },
   { href: "/moderacion", label: "Moderación", icon: ShieldAlert },
 ];
 
