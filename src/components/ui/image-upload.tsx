@@ -7,6 +7,75 @@ import { createSignedUploadUrl } from "@/app/actions/storage";
 
 type Folder = "bares" | "locales" | "eventos" | "puntos_interes" | "avatars";
 
+// Los logos de los locales se muestran en la app enteros dentro de un hueco común: para que todos
+// salgan del mismo tamaño, el archivo no debe llevar márgenes. Aquí se recortan solos al subirlos:
+// los bordes transparentes y, si el logo viene sobre fondo negro opaco, el negro pasa a transparente.
+// Las fotos (opacas y sin fondo negro liso) se suben tal cual.
+async function recortarLogo(file: File): Promise<File> {
+  if (!/png|webp/i.test(file.type)) return file;
+  const bmp = await createImageBitmap(file);
+  const escala = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * escala));
+  const h = Math.max(1, Math.round(bmp.height * escala));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return file;
+  ctx.drawImage(bmp, 0, 0, w, h);
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+
+  let transparentes = 0;
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 16) transparentes++;
+  const conTransparencia = transparentes / (w * h) > 0.01;
+
+  if (!conTransparencia) {
+    // ¿Fondo negro liso? (las cuatro esquinas casi negras)
+    const esquina = (x: number, y: number) => {
+      const i = (y * w + x) * 4;
+      return Math.max(d[i], d[i + 1], d[i + 2]);
+    };
+    const negro = [esquina(1, 1), esquina(w - 2, 1), esquina(1, h - 2), esquina(w - 2, h - 2)].every((v) => v < 24);
+    if (!negro) return file; // es una foto
+    for (let i = 0; i < d.length; i += 4) {
+      const lum = Math.max(d[i], d[i + 1], d[i + 2]);
+      const alfa = Math.max(0, Math.min(255, ((lum - 18) * 255 / 237) * 1.6));
+      if (alfa > 0 && lum > 0) {
+        d[i] = Math.min(255, (d[i] * 255) / lum);
+        d[i + 1] = Math.min(255, (d[i + 1] * 255) / lum);
+        d[i + 2] = Math.min(255, (d[i + 2] * 255) / lum);
+      }
+      d[i + 3] = alfa;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // Caja del contenido (píxeles visibles)
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 20) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) return file;
+  const cw = x1 - x0 + 1;
+  const ch = y1 - y0 + 1;
+  const k = Math.min(1, 900 / Math.max(cw, ch));
+  const out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(cw * k));
+  out.height = Math.max(1, Math.round(ch * k));
+  out.getContext("2d")?.drawImage(canvas, x0, y0, cw, ch, 0, 0, out.width, out.height);
+  const blob: Blob | null = await new Promise((res) => out.toBlob(res, "image/png"));
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" });
+}
+
 interface Props {
   value: string;
   onChange: (url: string) => void;
@@ -22,6 +91,7 @@ export default function ImageUpload({ value, onChange, folder }: Props) {
     setError("");
     setUploading(true);
     try {
+      if (folder === "locales") file = await recortarLogo(file).catch(() => file);
       const { signedUrl, publicUrl } = await createSignedUploadUrl(folder, file.name);
       const res = await fetch(signedUrl, {
         method: "PUT",
@@ -40,8 +110,9 @@ export default function ImageUpload({ value, onChange, folder }: Props) {
   return (
     <div className="space-y-2">
       {value ? (
-        <div className="relative w-full max-h-48 overflow-hidden rounded-md border border-border bg-muted/30">
-          <img src={value} alt="" className="w-full h-full object-cover max-h-48" />
+        <div className={`relative w-full max-h-48 overflow-hidden rounded-md border border-border ${folder === "locales" ? "bg-neutral-900" : "bg-muted/30"}`}>
+          {/* Los locales suelen llevar un logo con fondo transparente: se ve entero sobre oscuro */}
+          <img src={value} alt="" className={folder === "locales" ? "w-full h-40 object-contain p-6" : "w-full h-full object-cover max-h-48"} />
           <button
             type="button"
             onClick={() => onChange("")}
@@ -97,6 +168,12 @@ export default function ImageUpload({ value, onChange, folder }: Props) {
         )}
       </div>
 
+      {folder === "locales" && (
+        <p className="text-xs text-muted-foreground">
+          Sube el logo en PNG (mejor con fondo transparente). Los márgenes se recortan solos para que en la app todos
+          los locales salgan del mismo tamaño.
+        </p>
+      )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
