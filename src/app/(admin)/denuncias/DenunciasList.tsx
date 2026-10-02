@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Ban, Check, ImageOff, Loader2 } from "lucide-react";
-import { marcarDenunciasRevisadas, quitarFotoPerfil } from "@/app/actions/denuncias";
+import { borrarMensajeGrupo, marcarDenunciasRevisadas, quitarFotoGrupo, quitarFotoPerfil } from "@/app/actions/denuncias";
 import { banUserByAdmin } from "@/app/actions/users";
 
 export type DenunciaDetalle = {
@@ -16,7 +16,12 @@ export type DenunciaDetalle = {
   estado: string;
   created_at: string;
   denunciante: string | null;
+  tipo?: string | null;
+  referencia?: string | null;
+  contenido?: string | null;
 };
+
+const TIPOS: Record<string, string> = { perfil: "Perfil", mensaje: "Mensaje del chat", grupo: "Grupo" };
 
 export type DenunciadoRow = {
   user_id: string;
@@ -98,6 +103,34 @@ function Acciones({ f }: { f: DenunciadoRow }) {
   );
 }
 
+// Acción sobre lo denunciado: borrar el mensaje o quitar la foto del grupo
+function AccionContenido({ tipo, referencia }: { tipo: "mensaje" | "grupo"; referencia: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const texto = tipo === "mensaje" ? "Borrar mensaje" : "Quitar foto del grupo";
+  if (isPending) return <Loader2 className="mt-2 w-4 h-4 animate-spin text-muted-foreground" />;
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="mt-2 gap-1.5"
+      onClick={() => {
+        if (!confirm(`¿${texto}?`)) return;
+        startTransition(async () => {
+          try {
+            await (tipo === "mensaje" ? borrarMensajeGrupo(referencia) : quitarFotoGrupo(referencia));
+          } catch (e) {
+            alert((e as Error).message);
+          }
+          router.refresh();
+        });
+      }}
+    >
+      <ImageOff className="w-3.5 h-3.5" /> {texto}
+    </Button>
+  );
+}
+
 export default function DenunciasList({ filas }: { filas: DenunciadoRow[] }) {
   if (filas.length === 0) {
     return <p className="text-sm text-muted-foreground">Todavía no hay ninguna denuncia.</p>;
@@ -152,9 +185,18 @@ export default function DenunciasList({ filas }: { filas: DenunciadoRow[] }) {
                         <span className="font-medium text-foreground">{MOTIVOS[d.motivo] ?? d.motivo}</span>
                         <span>· {fecha(d.created_at)}</span>
                         <span>· de {d.denunciante ? `@${d.denunciante}` : "usuario borrado"}</span>
+                        <Badge variant="secondary">{TIPOS[d.tipo ?? "perfil"] ?? d.tipo}</Badge>
                         {d.estado === "revisada" && <Badge variant="outline">Revisada</Badge>}
                       </div>
+                      {d.contenido && (
+                        <p className="mt-1 rounded bg-background px-2 py-1 text-xs text-muted-foreground whitespace-pre-wrap">
+                          {d.tipo === "mensaje" ? "Mensaje: " : ""}
+                          {d.contenido}
+                        </p>
+                      )}
                       {d.detalle && <p className="mt-1 whitespace-pre-wrap">{d.detalle}</p>}
+                      {d.tipo === "mensaje" && d.referencia && <AccionContenido tipo="mensaje" referencia={d.referencia} />}
+                      {d.tipo === "grupo" && d.referencia && <AccionContenido tipo="grupo" referencia={d.referencia} />}
                     </li>
                   ))}
                 </ul>
