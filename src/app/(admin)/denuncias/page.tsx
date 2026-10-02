@@ -16,7 +16,7 @@ export default async function DenunciasPage() {
     supabase.rpc("ranking_denuncias", { p_limite: 200 }),
     supabase
       .from("denuncias")
-      .select("id, denunciado_id, denunciante_id, motivo, detalle, estado, created_at")
+      .select("id, denunciado_id, denunciante_id, motivo, detalle, estado, created_at, tipo, referencia, contenido")
       .order("created_at", { ascending: false })
       .limit(1000),
   ]);

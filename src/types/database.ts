@@ -219,6 +219,9 @@ export type Database = {
           estado: string
           id: string
           motivo: string
+          referencia: string | null
+          contenido: string | null
+          tipo: string
           revisada_at: string | null
         }
         Insert: {
@@ -229,6 +232,9 @@ export type Database = {
           estado?: string
           id?: string
           motivo: string
+          referencia?: string | null
+          contenido?: string | null
+          tipo?: string
           revisada_at?: string | null
         }
         Update: {
@@ -239,7 +245,67 @@ export type Database = {
           estado?: string
           id?: string
           motivo?: string
+          referencia?: string | null
+          contenido?: string | null
+          tipo?: string
           revisada_at?: string | null
+        }
+        Relationships: []
+      }
+      grupo_mensajes: {
+        Row: {
+          borrado: boolean
+          created_at: string
+          grupo_id: string
+          id: number
+          texto: string
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          borrado?: boolean
+          created_at?: string
+          grupo_id: string
+          id?: never
+          texto: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Update: {
+          borrado?: boolean
+          created_at?: string
+          grupo_id?: string
+          id?: never
+          texto?: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      grupos: {
+        Row: {
+          codigo: string
+          created_at: string
+          foto_url: string | null
+          id: string
+          lider_id: string | null
+          nombre: string
+        }
+        Insert: {
+          codigo?: string
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          lider_id?: string | null
+          nombre: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          lider_id?: string | null
+          nombre?: string
         }
         Relationships: []
       }
