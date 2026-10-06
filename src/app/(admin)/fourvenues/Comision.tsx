@@ -14,10 +14,11 @@ import { euros } from "./formato";
  * `heredada` la que se aplica si no tiene propia (la del local o la general).
  */
 export default function Comision({
-  ambito, clave, propia, heredada, origenHeredada, compacta,
+  ambito, clave, tipo, propia, heredada, origenHeredada, compacta,
 }: {
   ambito: "general" | "local" | "evento";
   clave: string;
+  tipo: "entrada" | "lista" | "reserva" | "pase";
   propia: number | null;
   heredada?: number;
   origenHeredada?: string;
@@ -33,7 +34,7 @@ export default function Comision({
     setError(null);
     startTransition(async () => {
       try {
-        await guardarComision(ambito, clave, nuevo);
+        await guardarComision(ambito, clave, tipo, nuevo);
         setEditando(false);
         router.refresh();
       } catch (e) {
@@ -85,7 +86,7 @@ export default function Comision({
         <Button type="button" size="icon-xs" variant="ghost" onClick={() => setEditando(false)} title="Cancelar">
           <X className="h-3 w-3" />
         </Button>
-        {ambito !== "general" && propia !== null && (
+        {propia !== null && (ambito !== "general" || heredada !== undefined) && (
           <Button type="button" size="xs" variant="ghost" onClick={() => guardar(null)} disabled={pendiente} title="Volver a la comisión heredada">
             Quitar
           </Button>
