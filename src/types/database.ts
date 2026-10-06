@@ -348,18 +348,21 @@ export type Database = {
           ambito: string
           clave: string
           euros: number
+          tipo: string
         }
         Insert: {
           actualizado_at?: string
           ambito: string
           clave?: string
           euros: number
+          tipo?: string
         }
         Update: {
           actualizado_at?: string
           ambito?: string
           clave?: string
           euros?: number
+          tipo?: string
         }
         Relationships: []
       }
@@ -375,6 +378,11 @@ export type Database = {
           fv_evento_id: string
           gastos_gestion: number | null
           importe: number | null
+          listas: number
+          listas_dentro: number
+          reservas: number
+          reservas_personas: number
+          pases: number
           inicio: string | null
           local: string | null
           nombre: string | null
@@ -392,6 +400,11 @@ export type Database = {
           fv_evento_id: string
           gastos_gestion?: number | null
           importe?: number | null
+          listas?: number
+          listas_dentro?: number
+          reservas?: number
+          reservas_personas?: number
+          pases?: number
           inicio?: string | null
           local?: string | null
           nombre?: string | null
@@ -409,6 +422,11 @@ export type Database = {
           fv_evento_id?: string
           gastos_gestion?: number | null
           importe?: number | null
+          listas?: number
+          listas_dentro?: number
+          reservas?: number
+          reservas_personas?: number
+          pases?: number
           inicio?: string | null
           local?: string | null
           nombre?: string | null

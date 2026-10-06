@@ -49,24 +49,30 @@ export async function verificarDiscrepancia(id: number): Promise<void> {
   revalidatePath(`/usuarios/${d.user_id}`);
 }
 
-// Comisión que cobra Nocturna por entrada: general, por local o por evento.
-// Con euros = null se quita (el evento vuelve a usar la del local, y el local la general).
-export async function guardarComision(ambito: "general" | "local" | "evento", clave: string, euros: number | null): Promise<void> {
+// Comisión que cobra Nocturna: por tipo (entrada vendida, apuntado en lista, reserva, pase) y por
+// ámbito (general, de un local o de una fiesta). Con euros = null se quita y vuelve a heredar.
+const TIPOS_COMISION = ["entrada", "lista", "reserva", "pase"] as const;
+export async function guardarComision(
+  ambito: "general" | "local" | "evento",
+  clave: string,
+  tipo: (typeof TIPOS_COMISION)[number],
+  euros: number | null,
+): Promise<void> {
   await requireAdmin();
   if (!["general", "local", "evento"].includes(ambito)) throw new Error("Ámbito no válido");
+  if (!TIPOS_COMISION.includes(tipo)) throw new Error("Tipo no válido");
   const k = ambito === "general" ? "" : clave.trim();
-  if (ambito !== "general" && !k) throw new Error("Falta el local o el evento");
+  if (ambito !== "general" && !k) throw new Error("Falta el local o la fiesta");
   const supabase = createAdminClient();
   if (euros === null) {
-    if (ambito === "general") throw new Error("La comisión general no se puede quitar; pon 0 si no cobráis nada");
-    const { error } = await supabase.from("fourvenues_comisiones").delete().eq("ambito", ambito).eq("clave", k);
+    const { error } = await supabase.from("fourvenues_comisiones").delete().eq("ambito", ambito).eq("clave", k).eq("tipo", tipo);
     if (error) throw new Error(error.message);
   } else {
     if (!Number.isFinite(euros) || euros < 0 || euros > 1000) throw new Error("La comisión tiene que estar entre 0 y 1000 €");
     const { error } = await supabase
       .from("fourvenues_comisiones")
-      .upsert({ ambito, clave: k, euros: Math.round(euros * 100) / 100, actualizado_at: new Date().toISOString() }, { onConflict: "ambito,clave" });
-    if (error) throw new Error(error.message);
+      .upsert({ ambito, clave: k, tipo, euros: Math.round(euros * 100) / 100, actualizado_at: new Date().toISOString() }, { onConflict: "ambito,clave,tipo" });
+    if (error) throw new Error(/tipo/.test(error.message) ? "Falta ejecutar la parte v2 de economia.sql en Supabase" : error.message);
   }
   revalidatePath("/fourvenues");
 }
