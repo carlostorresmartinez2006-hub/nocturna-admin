@@ -342,6 +342,141 @@ export type Database = {
         }
         Relationships: []
       }
+      fourvenues_comisiones: {
+        Row: {
+          actualizado_at: string
+          ambito: string
+          clave: string
+          euros: number
+        }
+        Insert: {
+          actualizado_at?: string
+          ambito: string
+          clave?: string
+          euros: number
+        }
+        Update: {
+          actualizado_at?: string
+          ambito?: string
+          clave?: string
+          euros?: number
+        }
+        Relationships: []
+      }
+      fourvenues_economia: {
+        Row: {
+          actualizado_at: string
+          anuladas: number | null
+          apuntados_listado: number | null
+          cancelado: boolean
+          codigo: string | null
+          cuenta: string
+          dentro: number
+          fv_evento_id: string
+          gastos_gestion: number | null
+          importe: number | null
+          inicio: string | null
+          local: string | null
+          nombre: string | null
+          vendidas: number
+          vendidas_org: number | null
+        }
+        Insert: {
+          actualizado_at?: string
+          anuladas?: number | null
+          apuntados_listado?: number | null
+          cancelado?: boolean
+          codigo?: string | null
+          cuenta: string
+          dentro?: number
+          fv_evento_id: string
+          gastos_gestion?: number | null
+          importe?: number | null
+          inicio?: string | null
+          local?: string | null
+          nombre?: string | null
+          vendidas?: number
+          vendidas_org?: number | null
+        }
+        Update: {
+          actualizado_at?: string
+          anuladas?: number | null
+          apuntados_listado?: number | null
+          cancelado?: boolean
+          codigo?: string | null
+          cuenta?: string
+          dentro?: number
+          fv_evento_id?: string
+          gastos_gestion?: number | null
+          importe?: number | null
+          inicio?: string | null
+          local?: string | null
+          nombre?: string | null
+          vendidas?: number
+          vendidas_org?: number | null
+        }
+        Relationships: []
+      }
+      fourvenues_informes: {
+        Row: {
+          actualizado_at: string
+          cuenta: string
+          datos: Json
+          desde: string | null
+          hasta: string | null
+        }
+        Insert: {
+          actualizado_at?: string
+          cuenta: string
+          datos: Json
+          desde?: string | null
+          hasta?: string | null
+        }
+        Update: {
+          actualizado_at?: string
+          cuenta?: string
+          datos?: Json
+          desde?: string | null
+          hasta?: string | null
+        }
+        Relationships: []
+      }
+      fourvenues_lecturas: {
+        Row: {
+          error: string | null
+          eventos: number | null
+          fin: string | null
+          horas: number | null
+          id: number
+          inicio: string
+          ok: boolean | null
+          tipo: string
+          ventas: number | null
+        }
+        Insert: {
+          error?: string | null
+          eventos?: number | null
+          fin?: string | null
+          horas?: number | null
+          id?: number
+          inicio?: string
+          ok?: boolean | null
+          tipo: string
+          ventas?: number | null
+        }
+        Update: {
+          error?: string | null
+          eventos?: number | null
+          fin?: string | null
+          horas?: number | null
+          id?: number
+          inicio?: string
+          ok?: boolean | null
+          tipo?: string
+          ventas?: number | null
+        }
+        Relationships: []
+      }
       fourvenues_ventas: {
         Row: {
           anulada: boolean

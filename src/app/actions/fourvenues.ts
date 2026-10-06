@@ -48,3 +48,25 @@ export async function verificarDiscrepancia(id: number): Promise<void> {
   revalidatePath("/ranking");
   revalidatePath(`/usuarios/${d.user_id}`);
 }
+
+// Comisión que cobra Nocturna por entrada: general, por local o por evento.
+// Con euros = null se quita (el evento vuelve a usar la del local, y el local la general).
+export async function guardarComision(ambito: "general" | "local" | "evento", clave: string, euros: number | null): Promise<void> {
+  await requireAdmin();
+  if (!["general", "local", "evento"].includes(ambito)) throw new Error("Ámbito no válido");
+  const k = ambito === "general" ? "" : clave.trim();
+  if (ambito !== "general" && !k) throw new Error("Falta el local o el evento");
+  const supabase = createAdminClient();
+  if (euros === null) {
+    if (ambito === "general") throw new Error("La comisión general no se puede quitar; pon 0 si no cobráis nada");
+    const { error } = await supabase.from("fourvenues_comisiones").delete().eq("ambito", ambito).eq("clave", k);
+    if (error) throw new Error(error.message);
+  } else {
+    if (!Number.isFinite(euros) || euros < 0 || euros > 1000) throw new Error("La comisión tiene que estar entre 0 y 1000 €");
+    const { error } = await supabase
+      .from("fourvenues_comisiones")
+      .upsert({ ambito, clave: k, euros: Math.round(euros * 100) / 100, actualizado_at: new Date().toISOString() }, { onConflict: "ambito,clave" });
+    if (error) throw new Error(error.message);
+  }
+  revalidatePath("/fourvenues");
+}

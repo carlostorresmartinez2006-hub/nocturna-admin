@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CalendarDays, Radar } from "lucide-react";
+import Economia from "./Economia";
 import DiscrepanciasList, { type DiscrepanciaRow } from "./DiscrepanciasList";
 
 // Datos que escribe el robot del VPS nocturna-bot (repo Nocturna, eventos-server/ventas.js).
@@ -23,11 +24,15 @@ function haceCuanto(iso: string | null) {
   return h < 48 ? `hace ${h} h` : `hace ${Math.round(h / 24)} días`;
 }
 
+const horasDesde = (iso: string) => (Date.now() - new Date(iso).getTime()) / 3600000;
+
 // Los eventos que empezaron hace menos de 12 h siguen contando como próximos.
 const inicioProximos = () => new Date(Date.now() - 12 * 3600 * 1000).toISOString();
 
-export default async function FourvenuesPage() {
+export default async function FourvenuesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await asegurarAdmin();
+  const sp = await searchParams;
+  const params = Object.fromEntries(Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"));
   const supabase = createAdminClient();
   const desde = inicioProximos();
 
@@ -41,6 +46,17 @@ export default async function FourvenuesPage() {
       .order("nombre", { ascending: true }),
     supabase.from("fourvenues_ventas").select("visto_at").order("visto_at", { ascending: false }).limit(1),
   ]);
+
+  // Cuándo leyeron los robots por última vez (cada pasada queda en fourvenues_lecturas, haya ventas o no)
+  const [{ data: lecturasVentas, error: errLecturas }, { data: lecturasEconomia }] = await Promise.all([
+    supabase.from("fourvenues_lecturas").select("inicio, fin, ok, error, horas, ventas").eq("tipo", "ventas").order("inicio", { ascending: false }).limit(20),
+    supabase.from("fourvenues_lecturas").select("inicio, fin, ok, error, eventos").eq("tipo", "economia").order("inicio", { ascending: false }).limit(5),
+  ]);
+  const ultimaOk = lecturasVentas?.find((l) => l.ok);
+  const ultimaVentas = lecturasVentas?.find((l) => l.ok !== null);
+  const fallo = ultimaVentas && !ultimaVentas.ok ? ultimaVentas : null;
+  const economiaOk = lecturasEconomia?.find((l) => l.ok);
+  const sinNoticias = !ultimaOk || horasDesde(ultimaOk.fin ?? ultimaOk.inicio) > 8;
 
   const listaVentas = ventas ?? [];
   const listaDisc = discrepancias ?? [];
@@ -94,10 +110,32 @@ export default async function FourvenuesPage() {
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Radar className="w-6 h-6 text-primary" /> Fourvenues
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Ventas leídas del panel de Fourvenues por el robot · última lectura {haceCuanto(ultima?.[0]?.visto_at ?? null)}
-        </p>
+        {errLecturas ? (
+          <p className="text-muted-foreground text-sm mt-1">
+            Ventas leídas del panel de Fourvenues por el robot · última venta guardada {haceCuanto(ultima?.[0]?.visto_at ?? null)}
+          </p>
+        ) : (
+          <div className="mt-1 space-y-0.5 text-sm">
+            <p className={sinNoticias ? "text-amber-400" : "text-muted-foreground"}>
+              Robot de ventas: última lectura {haceCuanto(ultimaOk?.fin ?? ultimaOk?.inicio ?? null)}
+              {ultimaOk ? ` (${ultimaOk.ventas ?? 0} ventas de ${ultimaOk.horas === 48 ? "las fiestas de las próximas 48 h" : "todas las próximas fiestas"})` : ""}
+              {sinNoticias && " · lleva más de 8 h sin leer"}
+            </p>
+            {fallo && (
+              <p className="text-red-400">
+                La última pasada falló {haceCuanto(fallo.inicio)}: {fallo.error ?? "error desconocido"}. Se reintenta sola en la siguiente.
+              </p>
+            )}
+            <p className="text-muted-foreground">
+              Histórico de todas las fiestas: actualizado {haceCuanto(economiaOk?.fin ?? null)} (una vez al día)
+            </p>
+          </div>
+        )}
       </div>
+
+      <Economia params={params} />
+
+      <h2 className="text-lg font-semibold pt-2">Próximas ventas</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
