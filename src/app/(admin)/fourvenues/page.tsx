@@ -101,6 +101,9 @@ export default async function FourvenuesPage({ searchParams }: { searchParams: P
   const grupos = new Map<string, typeof listaVentas>();
   for (const v of listaVentas) grupos.set(v.fv_evento_id, [...(grupos.get(v.fv_evento_id) ?? []), v]);
 
+  // Entradas compradas (con precio) frente a apuntados en lista gratis (0 €)
+  const gratisProx = listaVentas.filter((v) => v.precio === 0).length;
+  const pagadasProx = listaVentas.filter((v) => (v.precio ?? 0) > 0).length;
   const enApp = listaVentas.filter((v) => v.email && perfilPorEmail.has(v.email)).length;
   const verificadas = listaVentas.filter((v) => entradaPorCodigo.get(v.codigo)?.estado === "verificada").length;
 
@@ -139,7 +142,7 @@ export default async function FourvenuesPage({ searchParams }: { searchParams: P
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Ventas próximas", value: listaVentas.length },
+          { label: "Próximas: compradas / lista gratis", value: `${pagadasProx} / ${gratisProx}` },
           { label: "De usuarios de la app", value: enApp },
           { label: "Verificadas en la app", value: verificadas },
           { label: "Para revisar", value: filasDisc.length, alerta: filasDisc.length > 0 },
@@ -197,6 +200,7 @@ export default async function FourvenuesPage({ searchParams }: { searchParams: P
                         <th className="text-left font-medium px-4 py-2">Nombre</th>
                         <th className="text-left font-medium px-4 py-2">Email</th>
                         <th className="text-left font-medium px-4 py-2">Teléfono</th>
+                        <th className="text-left font-medium px-4 py-2">Tipo</th>
                         <th className="text-left font-medium px-4 py-2">Código</th>
                         <th className="text-left font-medium px-4 py-2">RRPP</th>
                         <th className="text-left font-medium px-4 py-2">En la app</th>
@@ -216,6 +220,19 @@ export default async function FourvenuesPage({ searchParams }: { searchParams: P
                             </td>
                             <td className="px-4 py-2.5 text-muted-foreground">{v.email ?? "—"}</td>
                             <td className="px-4 py-2.5 text-muted-foreground">{v.telefono ?? "—"}</td>
+                            <td className="px-4 py-2.5">
+                              {v.precio === null || v.precio === undefined ? (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              ) : v.precio > 0 ? (
+                                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs" title={v.tarifa ?? undefined}>
+                                  Entrada · {v.precio.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-sky-500/20 text-sky-400 border-sky-500/30 text-xs" title={v.tarifa ?? undefined}>
+                                  Lista · gratis
+                                </Badge>
+                              )}
+                            </td>
                             <td className="px-4 py-2.5 font-mono text-xs">{v.codigo}</td>
                             <td className="px-4 py-2.5 text-xs text-muted-foreground">{CUENTAS[v.cuenta] ?? v.cuenta}</td>
                             <td className="px-4 py-2.5">

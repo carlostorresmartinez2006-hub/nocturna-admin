@@ -16,12 +16,13 @@ const ahoraMs = () => Date.now();
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-// Lo que se cobra: por cada entrada vendida, cada apuntado en lista, cada reserva y cada pase
-// que vengan del enlace de la cuenta.
+// Lo que se cobra: por cada entrada comprada (precio > 0), cada apuntado en lista (gratis: entradas
+// a 0 € y listas de invitados), cada reserva y cada pase que vengan del enlace de la cuenta.
+// Fourvenues cuenta igual las entradas pagadas y las gratis; el robot las separa por precio.
 type Tipo = "entrada" | "lista" | "reserva" | "pase";
 const TIPOS: { tipo: Tipo; label: string; corto: string }[] = [
-  { tipo: "entrada", label: "Entrada vendida", corto: "Entradas" },
-  { tipo: "lista", label: "Apuntado en lista", corto: "Listas" },
+  { tipo: "entrada", label: "Entrada comprada", corto: "Compradas" },
+  { tipo: "lista", label: "Apuntado en lista (gratis)", corto: "Lista gratis" },
   { tipo: "reserva", label: "Reserva", corto: "Reservas" },
   { tipo: "pase", label: "Pase", corto: "Pases" },
 ];
@@ -42,6 +43,9 @@ type Fila = {
   listas_dentro?: number;
   reservas?: number;
   pases?: number;
+  pagadas?: number | null;
+  gratis?: number | null;
+  importe?: number | null;
 };
 
 const enlaceCon = (actual: Record<string, string>, cambio: Record<string, string | null>) => {
@@ -74,7 +78,12 @@ export default async function Economia({ params }: { params: Record<string, stri
       if (!data || data.length < 1000) return { filas, error: null };
     }
   };
-  let { filas, error } = await leer(`${BASE}, listas, listas_dentro, reservas, pases`);
+  const V2 = "listas, listas_dentro, reservas, pases";
+  let { filas, error } = await leer(`${BASE}, importe, ${V2}, pagadas, gratis`);
+  if (error && /pagadas|gratis/.test(error.message)) {
+    faltaV2 = true;
+    ({ filas, error } = await leer(`${BASE}, importe, ${V2}`));
+  }
   if (error && /listas|reservas|pases/.test(error.message)) {
     faltaV2 = true;
     ({ filas, error } = await leer(BASE));
@@ -113,15 +122,19 @@ export default async function Economia({ params }: { params: Record<string, stri
   const calc = filas
     .filter((f) => !f.cancelado && (cuenta === "todas" || f.cuenta === cuenta))
     .map((f) => {
+      // Con desglose: compradas = pagadas; gratis cuentan como lista. Sin él, todo como entradas.
+      const total = Math.max(f.vendidas ?? 0, f.apuntados_listado ?? 0);
+      const gratis = f.gratis ?? 0;
       const n: Record<Tipo, number> = {
-        entrada: Math.max(f.vendidas ?? 0, f.apuntados_listado ?? 0),
-        lista: f.listas ?? 0,
+        entrada: f.pagadas ?? Math.max(0, total - gratis),
+        lista: gratis + (f.listas ?? 0),
         reserva: f.reservas ?? 0,
         pase: f.pases ?? 0,
       };
       const ganado = TIPOS.reduce((s, { tipo }) => s + n[tipo] * comisionDe(f, tipo), 0);
       const t = f.inicio ? new Date(f.inicio).getTime() : 0;
-      return { f, n, ganado, t, pasado: t < ahora, actividad: n.entrada + n.lista + n.reserva + n.pase };
+      const sinDesglose = total > 0 && (f.pagadas === null || f.pagadas === undefined);
+      return { f, n, ganado, t, pasado: t < ahora, actividad: n.entrada + n.lista + n.reserva + n.pase, sinDesglose };
     });
   type Calc = (typeof calc)[number];
   const enPeriodo = calc.filter((x) => x.t >= inicioPeriodo);
@@ -131,7 +144,10 @@ export default async function Economia({ params }: { params: Record<string, stri
   const sumaGanado = (xs: Calc[]) => xs.reduce((s, x) => s + x.ganado, 0);
   const sumaN = (xs: Calc[], tipo: Tipo) => xs.reduce((s, x) => s + x.n[tipo], 0);
   const vendidasPasadas = sumaN(pasados, "entrada");
+  // «dentro» de Fourvenues cuenta juntas las compradas y las gratis a 0 €
+  const conEntrada = pasados.reduce((s, x) => s + x.n.entrada + (x.f.gratis ?? 0), 0);
   const dentro = pasados.reduce((s, x) => s + (x.f.dentro ?? 0), 0);
+  const pagado = conActividad.reduce((s, x) => s + Number(x.f.importe ?? 0), 0);
 
   // Por meses (los últimos 12, por fecha de la fiesta)
   const meses = Array.from({ length: 12 }, (_, i) => {
@@ -147,7 +163,7 @@ export default async function Economia({ params }: { params: Record<string, stri
   const valorMes = (m: (typeof meses)[number]) => (hayComision ? m.ganado : m.entradas + m.listas);
   const maxMes = Math.max(1, ...meses.map(valorMes));
   const mesActual = meses[11], mesAnterior = meses[10];
-  const textoMes = (m: (typeof meses)[number]) => `${m.entradas} entradas · ${m.listas} en lista`;
+  const textoMes = (m: (typeof meses)[number]) => `${m.entradas} compradas · ${m.listas} en lista gratis`;
 
   // Por local (todos los locales que aparecen en las fiestas, los que tienen actividad primero)
   const locales = new Map<string, { eventos: number; n: Record<Tipo, number>; ganado: number }>();
@@ -189,7 +205,7 @@ export default async function Economia({ params }: { params: Record<string, stri
       {faltaV2 && (
         <Card className="border-amber-500/40">
           <CardContent className="py-3 text-sm text-amber-400">
-            Para las listas, reservas, pases y la comisión por tipo hay que ejecutar otra vez <code>eventos-server/economia.sql</code> en el SQL Editor de Supabase (la parte v2).
+            Para separar entradas compradas y apuntados gratis (y las listas, reservas y pases) hay que ejecutar otra vez <code>eventos-server/economia.sql</code> entero en el SQL Editor de Supabase.
           </CardContent>
         </Card>
       )}
@@ -198,9 +214,9 @@ export default async function Economia({ params }: { params: Record<string, stri
         {[
           { label: "Ganado", value: euros(sumaGanado(pasados)), sub: "fiestas ya celebradas", destacado: true },
           { label: "Por cobrar", value: euros(sumaGanado(futuros)), sub: "de próximas fiestas" },
-          { label: "Entradas vendidas", value: (vendidasPasadas + sumaN(futuros, "entrada")).toLocaleString("es-ES"), sub: `${conActividad.length} fiestas con actividad` },
-          { label: "Apuntados en lista", value: (sumaN(pasados, "lista") + sumaN(futuros, "lista")).toLocaleString("es-ES"), sub: `${pasados.reduce((s, x) => s + (x.f.listas_dentro ?? 0), 0)} entraron` },
-          { label: "Entraron con entrada", value: dentro.toLocaleString("es-ES"), sub: vendidasPasadas ? `${Math.round((dentro / vendidasPasadas) * 100)} % de asistencia` : "—" },
+          { label: "Entradas compradas", value: (vendidasPasadas + sumaN(futuros, "entrada")).toLocaleString("es-ES"), sub: pagado ? `los clientes pagaron ${euros(pagado)}` : `${conActividad.length} fiestas con actividad` },
+          { label: "Apuntados en lista (gratis)", value: (sumaN(pasados, "lista") + sumaN(futuros, "lista")).toLocaleString("es-ES"), sub: "no pagan entrada" },
+          { label: "Entraron", value: dentro.toLocaleString("es-ES"), sub: conEntrada ? `${Math.round((dentro / conEntrada) * 100)} % de compradas y gratis` : "—" },
           { label: "Este mes", value: hayComision ? euros(mesActual.ganado) : `${mesActual.entradas + mesActual.listas}`, sub: `${textoMes(mesActual)} · mes pasado ${hayComision ? euros(mesAnterior.ganado) : mesAnterior.entradas + mesAnterior.listas}` },
         ].map(({ label, value, sub, destacado }) => (
           <Card key={label} className={destacado ? "border-primary/40" : undefined}>
@@ -216,7 +232,7 @@ export default async function Economia({ params }: { params: Record<string, stri
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-primary" /> {hayComision ? "Ganado por mes" : "Entradas y apuntados en lista por mes"}
+            <BarChart3 className="w-4 h-4 text-primary" /> {hayComision ? "Ganado por mes" : "Entradas compradas y apuntados en lista por mes"}
             <span className="text-xs font-normal text-muted-foreground">últimos 12 meses, por fecha de la fiesta</span>
           </CardTitle>
         </CardHeader>
@@ -240,8 +256,9 @@ export default async function Economia({ params }: { params: Record<string, stri
         <CardHeader>
           <CardTitle className="text-sm font-medium flex items-center gap-2"><Store className="w-4 h-4 text-primary" /> Comisiones y resultados por local</CardTitle>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Fourvenues no da la comisión, así que la ponéis vosotros: lo que cobráis en cada local por cada entrada vendida, cada persona que se apunta en
-            lista desde vuestro enlace, cada reserva y cada pase. Si un local no tiene la suya, se usa la general (en gris). Pulsa una cifra para cambiarla.
+            Fourvenues no da la comisión, así que la ponéis vosotros: lo que cobráis en cada local por cada entrada comprada (con precio), cada persona que
+            se apunta en lista gratis desde vuestro enlace (entradas a 0 €), cada reserva y cada pase. Si un local no tiene la suya, se usa la general (en
+            gris). Pulsa una cifra para cambiarla.
           </p>
         </CardHeader>
         <CardContent className="p-0">
@@ -316,7 +333,7 @@ export default async function Economia({ params }: { params: Record<string, stri
                   </tr>
                 </thead>
                 <tbody>
-                  {tabla.map(({ f, n, ganado, pasado }) => (
+                  {tabla.map(({ f, n, ganado, pasado, sinDesglose }) => (
                     <tr key={f.fv_evento_id} className="border-b border-border/50 last:border-0">
                       <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
                         {f.inicio ? new Date(f.inicio).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }) : "—"}
@@ -329,6 +346,7 @@ export default async function Economia({ params }: { params: Record<string, stri
                         <td key={t.tipo} className={`px-4 py-2 text-right ${n[t.tipo] ? "" : "text-muted-foreground/50"}`}>
                           {n[t.tipo]}
                           {t.tipo === "entrada" && f.anuladas ? <span className="ml-1 text-xs text-red-400">({f.anuladas} anul.)</span> : null}
+                          {t.tipo === "entrada" && sinDesglose ? <span className="ml-1 text-xs text-amber-400" title="Aún no se sabe cuántas fueron gratis: el robot lo mira en su próxima pasada">?</span> : null}
                         </td>
                       ))}
                       <td className="px-4 py-2 text-right text-muted-foreground">{pasado ? (f.dentro ?? 0) + (f.listas_dentro ?? 0) : "—"}</td>

@@ -382,6 +382,8 @@ export type Database = {
           listas_dentro: number
           reservas: number
           reservas_personas: number
+          pagadas: number | null
+          gratis: number | null
           pases: number
           inicio: string | null
           local: string | null
@@ -404,6 +406,8 @@ export type Database = {
           listas_dentro?: number
           reservas?: number
           reservas_personas?: number
+          pagadas?: number | null
+          gratis?: number | null
           pases?: number
           inicio?: string | null
           local?: string | null
@@ -426,6 +430,8 @@ export type Database = {
           listas_dentro?: number
           reservas?: number
           reservas_personas?: number
+          pagadas?: number | null
+          gratis?: number | null
           pases?: number
           inicio?: string | null
           local?: string | null
@@ -506,6 +512,8 @@ export type Database = {
           evento_inicio: string | null
           fv_evento_id: string
           nombre: string | null
+          precio: number | null
+          tarifa: string | null
           telefono: string | null
           vendida_at: string | null
           visto_at: string
@@ -520,6 +528,8 @@ export type Database = {
           evento_inicio?: string | null
           fv_evento_id: string
           nombre?: string | null
+          precio?: number | null
+          tarifa?: string | null
           telefono?: string | null
           vendida_at?: string | null
           visto_at?: string
@@ -534,6 +544,8 @@ export type Database = {
           evento_inicio?: string | null
           fv_evento_id?: string
           nombre?: string | null
+          precio?: number | null
+          tarifa?: string | null
           telefono?: string | null
           vendida_at?: string | null
           visto_at?: string
