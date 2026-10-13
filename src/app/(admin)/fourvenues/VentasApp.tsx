@@ -36,6 +36,8 @@ type Mantenimiento = {
   hosts?: unknown;
   eventos_vistos?: number;
   fiestas_enlazadas?: number;
+  avisos_reintentados?: number;
+  errores?: unknown;
   at?: string;
 };
 
@@ -145,7 +147,10 @@ export default async function VentasApp({ params }: { params: Record<string, str
   const conexion = mantenimientos[0] ?? null;
   const antiguedad = conexion ? ahoraMs() - new Date(conexion.at).getTime() : null;
   const parado = antiguedad === null || !Number.isFinite(antiguedad) || antiguedad > MINUTOS_AVISO * 60000;
-  const hosts = conexion && Array.isArray(conexion.datos.hosts) ? conexion.datos.hosts.filter((h): h is string => typeof h === "string") : [];
+  const textos = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "") : []);
+  const hosts = textos(conexion?.datos.hosts);
+  const errores = textos(conexion?.datos.errores);
+  const reintentados = Number(conexion?.datos.avisos_reintentados) || 0;
   const webhook = conexion?.datos.webhook ?? null;
   const webhookOk = webhook === "ya estaba" || webhook === "registrado";
   const fiestas = enlazadas.count ?? 0;
@@ -185,7 +190,7 @@ export default async function VentasApp({ params }: { params: Record<string, str
         </Card>
       )}
 
-      <Card className={parado || (conexion && (!hosts.length || !webhookOk)) ? "border-amber-500/40" : undefined}>
+      <Card className={errores.length ? "border-red-500/40" : parado || (conexion && (!hosts.length || !webhookOk)) ? "border-amber-500/40" : undefined}>
         <CardHeader>
           <CardTitle className="text-sm font-medium flex flex-wrap items-center gap-2">
             <PlugZap className="w-4 h-4 text-primary" /> Estado de la conexión
@@ -200,6 +205,16 @@ export default async function VentasApp({ params }: { params: Record<string, str
             </p>
           ) : (
             <>
+              {errores.length > 0 && (
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-400">
+                  <p className="font-medium">La última comprobación tuvo problemas</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs break-words">
+                    {errores.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {conexion.entorno !== "produccion" && (
                 <p className="text-amber-400">
                   La conexión está en modo pruebas: las compras que se hagan ahora no son reales y no se cobra a nadie.
@@ -240,6 +255,11 @@ export default async function VentasApp({ params }: { params: Record<string, str
                       ? "Fourvenues nos avisa cuando alguien paga"
                       : "No consta que Fourvenues nos avise de los pagos; sin eso las entradas pagadas no llegan a la app"}
                   </p>
+                  {reintentados > 0 && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {reintentados === 1 ? "1 aviso de pago reintentado" : `${reintentados.toLocaleString("es-ES")} avisos de pago reintentados`}
+                    </p>
+                  )}
                 </div>
               </div>
               {!hosts.length && (
@@ -247,6 +267,9 @@ export default async function VentasApp({ params }: { params: Record<string, str
                   Todavía no hay ningún local conectado: cada local tiene que añadir a Nocturna en Fourvenues → Ajustes → Partnerships. Hasta entonces no
                   se puede vender ninguna de sus fiestas dentro de la app.
                 </p>
+              )}
+              {conexion.entorno !== "produccion" && (
+                <p className="text-muted-foreground">En pruebas solo pueden comprar los administradores y las cuentas de prueba.</p>
               )}
               {hosts.length > 0 && fiestas === 0 && (
                 <p className="text-muted-foreground">
@@ -353,6 +376,7 @@ export default async function VentasApp({ params }: { params: Record<string, str
                         </td>
                         <td className="px-4 py-2.5">
                           <Badge variant="secondary" className={`text-xs ${estado.clase}`}>{estado.label}</Badge>
+                          {/* Motivo del fallo o, en un pedido pagado, una nota que no impide la compra */}
                           {p.error && <p className="mt-1 max-w-64 text-xs text-muted-foreground break-words">{p.error}</p>}
                         </td>
                         <td className="px-4 py-2.5">{badgeEntorno(p.entorno)}</td>
