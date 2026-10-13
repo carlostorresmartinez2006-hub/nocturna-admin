@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CalendarDays, Radar } from "lucide-react";
 import Economia from "./Economia";
+import VentasApp from "./VentasApp";
 import DiscrepanciasList, { type DiscrepanciaRow } from "./DiscrepanciasList";
 
 // Datos que escribe el robot del VPS nocturna-bot (repo Nocturna, eventos-server/ventas.js).
@@ -135,6 +136,8 @@ export default async function FourvenuesPage({ searchParams }: { searchParams: P
           </div>
         )}
       </div>
+
+      <VentasApp params={params} />
 
       <Economia params={params} />
 

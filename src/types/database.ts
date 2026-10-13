@@ -180,10 +180,16 @@ export type Database = {
           email_ticket: string | null
           estado: string
           evento_id: string | null
+          fv_pedido_id: string | null
           id: string
           imagen_url: string | null
+          incluye: string | null
           nombre_ticket: string | null
+          personas: number | null
+          precio: number | null
           qr_code: string | null
+          tarifa: string | null
+          tipo: string | null
           user_id: string
         }
         Insert: {
@@ -191,10 +197,16 @@ export type Database = {
           email_ticket?: string | null
           estado?: string
           evento_id?: string | null
+          fv_pedido_id?: string | null
           id?: string
           imagen_url?: string | null
+          incluye?: string | null
           nombre_ticket?: string | null
+          personas?: number | null
+          precio?: number | null
           qr_code?: string | null
+          tarifa?: string | null
+          tipo?: string | null
           user_id: string
         }
         Update: {
@@ -202,10 +214,16 @@ export type Database = {
           email_ticket?: string | null
           estado?: string
           evento_id?: string | null
+          fv_pedido_id?: string | null
           id?: string
           imagen_url?: string | null
+          incluye?: string | null
           nombre_ticket?: string | null
+          personas?: number | null
+          precio?: number | null
           qr_code?: string | null
+          tarifa?: string | null
+          tipo?: string | null
           user_id?: string
         }
         Relationships: []
@@ -552,6 +570,105 @@ export type Database = {
         }
         Relationships: []
       }
+      fv_config: {
+        Row: {
+          actualizado_at: string
+          clave: string
+          valor: string
+        }
+        Insert: {
+          actualizado_at?: string
+          clave: string
+          valor: string
+        }
+        Update: {
+          actualizado_at?: string
+          clave?: string
+          valor?: string
+        }
+        Relationships: []
+      }
+      fv_pedidos: {
+        Row: {
+          cantidad: number
+          confirmado_at: string | null
+          created_at: string
+          entorno: string
+          error: string | null
+          estado: string
+          evento_id: string | null
+          fv_ids: string[]
+          fv_tarifa_id: string
+          id: string
+          payment_id: string | null
+          tarifa_nombre: string | null
+          tipo: string
+          total: number | null
+          user_id: string
+        }
+        Insert: {
+          cantidad?: number
+          confirmado_at?: string | null
+          created_at?: string
+          entorno: string
+          error?: string | null
+          estado?: string
+          evento_id?: string | null
+          fv_ids?: string[]
+          fv_tarifa_id: string
+          id?: string
+          payment_id?: string | null
+          tarifa_nombre?: string | null
+          tipo: string
+          total?: number | null
+          user_id: string
+        }
+        Update: {
+          cantidad?: number
+          confirmado_at?: string | null
+          created_at?: string
+          entorno?: string
+          error?: string | null
+          estado?: string
+          evento_id?: string | null
+          fv_ids?: string[]
+          fv_tarifa_id?: string
+          id?: string
+          payment_id?: string | null
+          tarifa_nombre?: string | null
+          tipo?: string
+          total?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fv_webhooks: {
+        Row: {
+          error: string | null
+          evento: string | null
+          id: string
+          payload: Json | null
+          procesado_at: string | null
+          recibido_at: string
+        }
+        Insert: {
+          error?: string | null
+          evento?: string | null
+          id: string
+          payload?: Json | null
+          procesado_at?: string | null
+          recibido_at?: string
+        }
+        Update: {
+          error?: string | null
+          evento?: string | null
+          id?: string
+          payload?: Json | null
+          procesado_at?: string | null
+          recibido_at?: string
+        }
+        Relationships: []
+      }
       eventos: {
         Row: {
           created_at: string | null
@@ -561,6 +678,8 @@ export type Database = {
           fecha_evento: string | null
           fecha_texto: string | null
           fourvenues_evento_id: string | null
+          fv_cm_evento_id: string | null
+          fv_cm_host_id: string | null
           id: string
           imagen_cartel_url: string | null
           local_id: string
@@ -576,6 +695,8 @@ export type Database = {
           fecha_evento?: string | null
           fecha_texto?: string | null
           fourvenues_evento_id?: string | null
+          fv_cm_evento_id?: string | null
+          fv_cm_host_id?: string | null
           id?: string
           imagen_cartel_url?: string | null
           local_id: string
@@ -591,6 +712,8 @@ export type Database = {
           fecha_evento?: string | null
           fecha_texto?: string | null
           fourvenues_evento_id?: string | null
+          fv_cm_evento_id?: string | null
+          fv_cm_host_id?: string | null
           id?: string
           imagen_cartel_url?: string | null
           local_id?: string
