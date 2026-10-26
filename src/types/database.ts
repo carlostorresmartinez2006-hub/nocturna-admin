@@ -948,11 +948,248 @@ export type Database = {
           },
         ]
       }
+      // Relaciones públicas (Nocturna/supabase/rrpps.sql). Solo con la service role.
+      rrpps: {
+        Row: {
+          activo: boolean
+          codigo: string
+          comision_entrada: number
+          created_at: string
+          desactivado_at: string | null
+          email: string | null
+          id: string
+          nombre: string
+          notas: string | null
+          telefono: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          activo?: boolean
+          codigo: string
+          comision_entrada?: number
+          created_at?: string
+          desactivado_at?: string | null
+          email?: string | null
+          id?: string
+          nombre: string
+          notas?: string | null
+          telefono?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          activo?: boolean
+          codigo?: string
+          comision_entrada?: number
+          created_at?: string
+          desactivado_at?: string | null
+          email?: string | null
+          id?: string
+          nombre?: string
+          notas?: string | null
+          telefono?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      rrpp_codigos: {
+        Row: { codigo: string; desde: string; hasta: string | null; rrpp_id: string }
+        Insert: { codigo: string; desde?: string; hasta?: string | null; rrpp_id: string }
+        Update: { codigo?: string; desde?: string; hasta?: string | null; rrpp_id?: string }
+        Relationships: []
+      }
+      rrpp_atribuciones: {
+        Row: { codigo: string | null; created_at: string; evento_id: string; id: number; rrpp_id: string | null; user_id: string }
+        Insert: { codigo?: string | null; created_at?: string; evento_id: string; rrpp_id?: string | null; user_id: string }
+        Update: { codigo?: string | null; created_at?: string; evento_id?: string; rrpp_id?: string | null; user_id?: string }
+        Relationships: []
+      }
+      rrpp_liquidaciones: {
+        Row: {
+          creada_por: string | null
+          deshecha_at: string | null
+          deshecha_por: string | null
+          id: number
+          importe: number
+          nota: string | null
+          num_descontadas: number
+          num_ventas: number
+          pagada_at: string
+          rrpp_id: string
+        }
+        Insert: {
+          creada_por?: string | null
+          deshecha_at?: string | null
+          deshecha_por?: string | null
+          importe: number
+          nota?: string | null
+          num_descontadas?: number
+          num_ventas: number
+          pagada_at?: string
+          rrpp_id: string
+        }
+        Update: {
+          creada_por?: string | null
+          deshecha_at?: string | null
+          deshecha_por?: string | null
+          importe?: number
+          nota?: string | null
+          num_descontadas?: number
+          num_ventas?: number
+          pagada_at?: string
+          rrpp_id?: string
+        }
+        Relationships: []
+      }
+      rrpp_ventas: {
+        Row: {
+          actualizado_at: string
+          anulada_aviso: boolean
+          anulada_origen: boolean
+          anulada_robot: boolean
+          atribucion_id: number | null
+          comision: number
+          created_at: string
+          descontada_en: number | null
+          estado: "valida" | "anulada" | "excluida"
+          evento_id: string | null
+          evento_inicio: string | null
+          evento_titulo: string | null
+          excluida_por: string | null
+          fiesta_cancelada: boolean
+          fv_evento_id: string | null
+          id: number
+          liquidacion_id: number | null
+          manual: boolean
+          motivo: string | null
+          origen: "web" | "app"
+          precio: number | null
+          ref: string
+          rrpp_id: string
+          sin_pagar: boolean
+          user_id: string | null
+          vendida_at: string
+        }
+        Insert: {
+          actualizado_at?: string
+          anulada_aviso?: boolean
+          anulada_robot?: boolean
+          atribucion_id?: number | null
+          comision: number
+          created_at?: string
+          descontada_en?: number | null
+          estado?: "valida" | "anulada" | "excluida"
+          evento_id?: string | null
+          evento_inicio?: string | null
+          evento_titulo?: string | null
+          excluida_por?: string | null
+          fiesta_cancelada?: boolean
+          fv_evento_id?: string | null
+          manual?: boolean
+          liquidacion_id?: number | null
+          motivo?: string | null
+          origen: "web" | "app"
+          precio?: number | null
+          ref: string
+          rrpp_id: string
+          user_id?: string | null
+          vendida_at: string
+        }
+        Update: {
+          actualizado_at?: string
+          anulada_aviso?: boolean
+          anulada_robot?: boolean
+          atribucion_id?: number | null
+          comision?: number
+          created_at?: string
+          descontada_en?: number | null
+          estado?: "valida" | "anulada" | "excluida"
+          evento_id?: string | null
+          evento_inicio?: string | null
+          evento_titulo?: string | null
+          excluida_por?: string | null
+          fiesta_cancelada?: boolean
+          fv_evento_id?: string | null
+          manual?: boolean
+          liquidacion_id?: number | null
+          motivo?: string | null
+          origen?: "web" | "app"
+          precio?: number | null
+          ref?: string
+          rrpp_id?: string
+          user_id?: string | null
+          vendida_at?: string
+        }
+        Relationships: []
+      }
+      rrpp_errores: {
+        Row: { created_at: string; error: string; id: number; origen: string; ref: string | null }
+        Insert: { created_at?: string; error: string; origen: string; ref?: string | null }
+        Update: { created_at?: string; error?: string; origen?: string; ref?: string | null }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      rrpp_resumen: {
+        Row: {
+          a_descontar: number
+          a_descontar_euros: number
+          anuladas: number
+          excluidas: number
+          facturado_euros: number
+          pagable_euros: number
+          pagables: number
+          pagadas: number
+          pagado_euros: number
+          pendiente_euros: number
+          pendientes: number
+          personas: number
+          rrpp_id: string
+          ultima_venta: string | null
+          ventas: number
+        }
+        Relationships: []
+      }
+      rrpp_por_fiesta: {
+        Row: {
+          comision: number
+          evento_id: string | null
+          evento_inicio: string | null
+          evento_titulo: string | null
+          facturado: number
+          rrpp_id: string
+          ventas: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      rrpp_crear: {
+        Args: {
+          p_nombre: string
+          p_codigo: string
+          p_comision: number
+          p_email?: string | null
+          p_telefono?: string | null
+          p_notas?: string | null
+          p_user_id?: string | null
+        }
+        Returns: string
+      }
+      rrpp_cambiar_codigo: { Args: { p_rrpp_id: string; p_codigo: string }; Returns: string }
+      rrpp_activar: { Args: { p_rrpp_id: string; p_activo: boolean }; Returns: undefined }
+      rrpp_borrar: { Args: { p_rrpp_id: string }; Returns: undefined }
+      rrpp_liquidar: {
+        Args: { p_rrpp_id: string; p_venta_ids: number[]; p_descontar_ids: number[]; p_nota: string | null; p_admin: string }
+        Returns: number
+      }
+      rrpp_deshacer_liquidacion: { Args: { p_rrpp_id: string; p_liquidacion_id: number; p_admin: string }; Returns: undefined }
+      rrpp_corregir_venta: {
+        Args: { p_rrpp_id: string; p_venta_id: number; p_estado: "valida" | "anulada"; p_motivo: string | null }
+        Returns: undefined
+      }
       ranking_denuncias: {
         Args: { p_limite?: number }
         Returns: {

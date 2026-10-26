@@ -20,6 +20,7 @@ import {
   Ticket,
   Radar,
   Flag,
+  Handshake,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/entradas", label: "Entradas", icon: Ticket },
   { href: "/fourvenues", label: "Fourvenues", icon: Radar },
+  { href: "/rrpps", label: "RRPPs", icon: Handshake },
   { href: "/eventos", label: "Eventos", icon: CalendarDays },
   { href: "/locales", label: "Locales", icon: MapPin },
   { href: "/bares", label: "Bares", icon: Wine },
