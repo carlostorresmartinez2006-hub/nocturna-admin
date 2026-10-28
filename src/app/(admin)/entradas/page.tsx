@@ -11,6 +11,8 @@ type EntradaWithRelations = {
   created_at: string;
   user_id: string;
   evento_id: string | null;
+  // Si tiene código QR (el código no se manda a la página: se pide al abrirlo, app/actions/qr.ts)
+  tiene_qr: boolean;
   evento: { id: string; titulo: string; fecha_texto: string | null; fecha_evento: string | null } | null;
   profile: { id: string; username: string | null; email: string } | null;
 };
@@ -27,7 +29,7 @@ export default async function EntradasPage() {
   ] = await Promise.all([
     supabase
       .from("entradas")
-      .select("id, estado, nombre_ticket, email_ticket, created_at, user_id, evento_id, eventos(id, titulo, fecha_texto, fecha_evento)")
+      .select("id, estado, nombre_ticket, email_ticket, created_at, user_id, evento_id, qr_code, eventos(id, titulo, fecha_texto, fecha_evento)")
       .order("created_at", { ascending: false }),
     supabase
       .from("eventos")
@@ -64,6 +66,7 @@ export default async function EntradasPage() {
     created_at: e.created_at,
     user_id: e.user_id,
     evento_id: e.evento_id,
+    tiene_qr: !!e.qr_code?.trim(),
     evento: e.eventos ?? null,
     profile: profileMap[e.user_id] ?? null,
   }));

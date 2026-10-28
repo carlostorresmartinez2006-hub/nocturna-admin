@@ -184,6 +184,12 @@ export type Database = {
           imagen_url: string | null
           nombre_ticket: string | null
           qr_code: string | null
+          // Compras y listas de la app (Nocturna/supabase/fourvenues_canal.sql)
+          tipo: string | null
+          tarifa: string | null
+          precio: number | null
+          personas: number | null
+          fv_pedido_id: string | null
           user_id: string
         }
         Insert: {
@@ -207,6 +213,53 @@ export type Database = {
           nombre_ticket?: string | null
           qr_code?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      // Entradas que alguien compró para sus amigos y aún no son de nadie (o ya reclamadas).
+      // Nocturna/supabase/entradas_amigos.sql. Solo con la service role.
+      entradas_amigos: {
+        Row: {
+          id: string
+          comprador_id: string
+          evento_id: string
+          qr_code: string
+          codigo: string
+          fv_pedido_id: string | null
+          tarifa: string | null
+          precio: number | null
+          incluye: string | null
+          estado: string
+          reclamada_por: string | null
+          entrada_id: string | null
+          reclamada_at: string | null
+          nombre_titular: string | null
+          solicitud_por: string | null
+          solicitud_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          comprador_id: string
+          evento_id: string
+          qr_code: string
+          codigo?: string
+          fv_pedido_id?: string | null
+          tarifa?: string | null
+          precio?: number | null
+          incluye?: string | null
+          estado?: string
+          reclamada_por?: string | null
+          entrada_id?: string | null
+          reclamada_at?: string | null
+          nombre_titular?: string | null
+          solicitud_por?: string | null
+          solicitud_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          estado?: string
+          nombre_titular?: string | null
         }
         Relationships: []
       }

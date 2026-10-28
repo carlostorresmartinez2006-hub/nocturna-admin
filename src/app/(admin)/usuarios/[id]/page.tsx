@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowLeft, Shield, Mail, AtSign, User, Calendar, MapPin,
-  Bell, Users, Ticket,
+  Bell, Users, Ticket, Gift,
 } from "lucide-react";
+import { BotonQr } from "@/components/entradas/BotonQr";
 import AddEntradaForm from "./AddEntradaForm";
 import DeleteEntradaButton from "./DeleteEntradaButton";
 import EditProfileForm from "./EditProfileForm";
@@ -28,11 +29,12 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
     { data: allUsers },
     { data: blockedByUser },
     { data: silencedByUser },
+    { data: paraAmigos },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).single(),
     supabase
       .from("entradas")
-      .select("id, estado, nombre_ticket, email_ticket, created_at, eventos(titulo, fecha_texto)")
+      .select("id, estado, nombre_ticket, email_ticket, created_at, qr_code, tipo, personas, eventos(titulo, fecha_texto)")
       .eq("user_id", id)
       .order("created_at", { ascending: false }),
     supabase
@@ -61,6 +63,12 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
       .order("username"),
     supabase.from("bloqueados").select("blocked_id").eq("blocker_id", id),
     supabase.from("silenciados").select("silenced_id").eq("user_id", id),
+    // Entradas que compró para sus amigos (Nocturna/supabase/entradas_amigos.sql)
+    supabase
+      .from("entradas_amigos")
+      .select("id, estado, nombre_titular, reclamada_por, created_at, eventos(titulo, fecha_texto)")
+      .eq("comprador_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (!profile) notFound();
@@ -75,6 +83,23 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
       .select("id, username, avatar_url")
       .in("id", friendIds);
     friendProfiles = data ?? [];
+  }
+
+  type ParaAmigoRow = {
+    id: string;
+    estado: string;
+    nombre_titular: string | null;
+    reclamada_por: string | null;
+    created_at: string;
+    eventos: { titulo: string; fecha_texto: string | null } | null;
+  };
+  const paraAmigosTyped = (paraAmigos ?? []) as unknown as ParaAmigoRow[];
+  // Quién tiene cada una (las ya reclamadas)
+  const reclamadoras = [...new Set(paraAmigosTyped.map((a) => a.reclamada_por).filter((x): x is string => !!x))];
+  const nombreDe: Record<string, string> = {};
+  if (reclamadoras.length > 0) {
+    const { data } = await supabase.from("profiles").select("id, username, email").in("id", reclamadoras);
+    for (const p of data ?? []) nombreDe[p.id] = p.username ?? p.email;
   }
 
   const blockedFriendIds = (blockedByUser ?? []).map((b) => b.blocked_id);
@@ -95,9 +120,16 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
     nombre_ticket: string | null;
     email_ticket: string | null;
     created_at: string;
+    qr_code: string | null;
+    tipo: string | null;
+    personas: number | null;
     eventos: { titulo: string; fecha_texto: string | null } | null;
   };
-  const entradasTyped = (entradas ?? []) as unknown as EntradaRow[];
+  // El código QR no se pasa al HTML: solo si lo tiene (se pide al abrirlo, app/actions/qr.ts)
+  const entradasTyped = ((entradas ?? []) as unknown as EntradaRow[]).map(({ qr_code, ...e }) => ({
+    ...e,
+    tieneQr: !!qr_code?.trim(),
+  }));
 
   return (
     <div className="p-8 space-y-6 max-w-4xl">
@@ -195,6 +227,7 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {e.eventos?.fecha_texto ?? "—"}
+                        {e.tipo === "lista" && <span> · Lista{e.personas && e.personas > 1 ? ` (${e.personas} personas)` : ""}</span>}
                         {e.nombre_ticket && <span> · {e.nombre_ticket}</span>}
                         {e.email_ticket && <span> · {e.email_ticket}</span>}
                       </p>
@@ -212,6 +245,7 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
                     <p className="text-xs text-muted-foreground shrink-0">
                       {new Date(e.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
                     </p>
+                    <BotonQr origen="entrada" id={e.id} tieneQr={e.tieneQr} />
                     <DeleteEntradaButton entradaId={e.id} userId={id} />
                   </div>
                 ))}
@@ -219,6 +253,57 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
             )}
           </CardContent>
         </Card>
+
+        {/* Para sus amigos: las que compró de más (cada una con su QR) */}
+        {paraAmigosTyped.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Gift className="w-4 h-4 text-primary" />
+                Para sus amigos ({paraAmigosTyped.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {paraAmigosTyped.map((a) => (
+                  <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/40">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{a.eventos?.titulo ?? "Evento desconocido"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {a.eventos?.fecha_texto ?? "—"}
+                        {a.nombre_titular && <span> · para {a.nombre_titular}</span>}
+                        {a.reclamada_por && (
+                          <span>
+                            {" · la tiene "}
+                            <Link href={`/usuarios/${a.reclamada_por}`} className="hover:text-primary underline-offset-2 hover:underline">
+                              {nombreDe[a.reclamada_por] ?? "otro usuario"}
+                            </Link>
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={
+                        a.estado === "reclamada"
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs"
+                          : a.estado === "anulada"
+                            ? "bg-red-500/20 text-red-400 border-red-500/30 text-xs"
+                            : "text-xs"
+                      }
+                    >
+                      {a.estado === "pendiente" ? "sin repartir" : a.estado}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground shrink-0">
+                      {new Date(a.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
+                    </p>
+                    <BotonQr origen="amigo" id={a.id} tieneQr />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Notification prefs */}
         <Card>
