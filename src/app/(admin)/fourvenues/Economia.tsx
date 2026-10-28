@@ -6,10 +6,13 @@ import { BarChart3, Coins, Store } from "lucide-react";
 import Comision from "./Comision";
 import { euros } from "./formato";
 
-// Datos de los robots del VPS (repo Nocturna, eventos-server/economia.js y ventas.js).
+// Datos de los robots del VPS (repo Nocturna, eventos-server/economia.js y ventas.js) y, para las
+// discotecas de tickes.es (QUBIK), de sus ventas (eventos-server/economia_tickes.sql).
 // Solo números por fiesta, sin datos personales: se conservan siempre.
 
-const CUENTAS: Record<string, string> = { pablo: "Pablo", nocturna: "Nocturna" };
+const CUENTAS: Record<string, string> = { pablo: "Pablo", nocturna: "Nocturna", tickes: "tickes.es" };
+// tickes.es no dice quién entró: sus fiestas no cuentan en «Entraron»
+const sinEntrada = (f: { cuenta: string }) => f.cuenta === "tickes";
 const PERIODOS: Record<string, string> = { todo: "Todo", ano: "Este año", mes: "Este mes", "30d": "Últimos 30 días" };
 // Hora actual fuera del render (regla de pureza de React)
 const ahoraMs = () => Date.now();
@@ -145,7 +148,7 @@ export default async function Economia({ params }: { params: Record<string, stri
   const sumaN = (xs: Calc[], tipo: Tipo) => xs.reduce((s, x) => s + x.n[tipo], 0);
   const vendidasPasadas = sumaN(pasados, "entrada");
   // «dentro» de Fourvenues cuenta juntas las compradas y las gratis a 0 €
-  const conEntrada = pasados.reduce((s, x) => s + x.n.entrada + (x.f.gratis ?? 0), 0);
+  const conEntrada = pasados.filter((x) => !sinEntrada(x.f)).reduce((s, x) => s + x.n.entrada + (x.f.gratis ?? 0), 0);
   const dentro = pasados.reduce((s, x) => s + (x.f.dentro ?? 0), 0);
   const pagado = conActividad.reduce((s, x) => s + Number(x.f.importe ?? 0), 0);
 
@@ -192,7 +195,7 @@ export default async function Economia({ params }: { params: Record<string, stri
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold flex items-center gap-2"><Coins className="w-5 h-5 text-primary" /> Economía</h2>
         <div className="flex flex-wrap gap-2 text-sm">
-          {[["todas", "Las dos cuentas"], ...Object.entries(CUENTAS)].map(([k, v]) => (
+          {[["todas", "Todas las cuentas"], ...Object.entries(CUENTAS)].map(([k, v]) => (
             <Link key={k} href={enlaceCon(filtros, { cuenta: k === "todas" ? null : k })} className={chip(cuenta === k)}>{v}</Link>
           ))}
           <span className="mx-1 w-px bg-border" />
@@ -256,7 +259,7 @@ export default async function Economia({ params }: { params: Record<string, stri
         <CardHeader>
           <CardTitle className="text-sm font-medium flex items-center gap-2"><Store className="w-4 h-4 text-primary" /> Comisiones y resultados por local</CardTitle>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Fourvenues no da la comisión, así que la ponéis vosotros: lo que cobráis en cada local por cada entrada comprada (con precio), cada persona que
+            Ni Fourvenues ni tickes.es dan la comisión, así que la ponéis vosotros: lo que cobráis en cada local por cada entrada comprada (con precio), cada persona que
             se apunta en lista gratis desde vuestro enlace (entradas a 0 €), cada reserva y cada pase. Si un local no tiene la suya, se usa la general (en
             gris). Pulsa una cifra para cambiarla.
           </p>
@@ -349,7 +352,9 @@ export default async function Economia({ params }: { params: Record<string, stri
                           {t.tipo === "entrada" && sinDesglose ? <span className="ml-1 text-xs text-amber-400" title="Aún no se sabe cuántas fueron gratis: el robot lo mira en su próxima pasada">?</span> : null}
                         </td>
                       ))}
-                      <td className="px-4 py-2 text-right text-muted-foreground">{pasado ? (f.dentro ?? 0) + (f.listas_dentro ?? 0) : "—"}</td>
+                      <td className="px-4 py-2 text-right text-muted-foreground" title={sinEntrada(f) ? "tickes.es no dice quién entró" : undefined}>
+                        {pasado && !sinEntrada(f) ? (f.dentro ?? 0) + (f.listas_dentro ?? 0) : "—"}
+                      </td>
                       <td className="px-4 py-2 text-right font-medium">{euros(ganado)}</td>
                     </tr>
                   ))}

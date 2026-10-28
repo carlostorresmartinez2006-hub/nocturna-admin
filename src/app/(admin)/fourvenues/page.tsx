@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 const CUENTAS: Record<string, string> = {
   pablo: "pablo-gomez-puig-garach",
   nocturna: "nocturnagranada",
+  tickes: "tickes.es (promotora)",
 };
 
 function haceCuanto(iso: string | null) {
@@ -111,7 +112,7 @@ export default async function FourvenuesPage({ searchParams }: { searchParams: P
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Radar className="w-6 h-6 text-primary" /> Fourvenues
+          <Radar className="w-6 h-6 text-primary" /> Fourvenues y tickes.es
         </h1>
         {errLecturas ? (
           <p className="text-muted-foreground text-sm mt-1">
