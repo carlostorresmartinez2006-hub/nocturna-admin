@@ -19,6 +19,7 @@ import {
 import { Ticket, Plus, Trash2, Loader2, ChevronRight, X } from "lucide-react";
 import { cn } from "cn";
 import { addEntrada, deleteEntrada, deleteEntradas } from "@/app/actions/entradas";
+import { BotonQr } from "@/components/entradas/BotonQr";
 
 type EntradaRow = {
   id: string;
@@ -28,6 +29,7 @@ type EntradaRow = {
   created_at: string;
   user_id: string;
   evento_id: string | null;
+  tiene_qr: boolean;
   evento: { id: string; titulo: string; fecha_texto: string | null; fecha_evento: string | null } | null;
   profile: { id: string; username: string | null; email: string } | null;
 };
@@ -287,13 +289,14 @@ export default function EntradaTable({
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Estado</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Nombre ticket</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fecha</th>
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">QR</th>
                 <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
             <tbody>
               {entradas.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <Ticket className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
                     <p className="text-muted-foreground">No hay entradas registradas todavía</p>
                   </td>
@@ -349,6 +352,9 @@ export default function EntradaTable({
                         month: "short",
                         year: "numeric",
                       })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <BotonQr origen="entrada" id={e.id} tieneQr={e.tiene_qr} />
                     </td>
                     <td className="px-4 py-3">
                       <DeleteButton entradaId={e.id} />
