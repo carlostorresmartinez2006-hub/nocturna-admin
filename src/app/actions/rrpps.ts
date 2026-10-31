@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { Json } from "@/types/database";
 
 // Relaciones públicas (Nocturna/supabase/rrpps.sql). Lo que toca dinero (pagos, códigos, ventas) va
 // por las funciones SQL, que lo hacen de una vez y con bloqueo: dos administradores a la vez no
@@ -20,7 +21,6 @@ const idsValidos = (xs: unknown): number[] =>
 
 export interface DatosRrpp {
   nombre: string;
-  comision: number;
   email?: string;
   telefono?: string;
   notas?: string;
@@ -51,7 +51,6 @@ function refrescar(id?: string) {
 
 function validar(d: DatosRrpp): string | null {
   if (typeof d?.nombre !== "string" || !d.nombre.trim() || d.nombre.trim().length > 80) return "El nombre es obligatorio (máximo 80 caracteres)";
-  if (typeof d.comision !== "number" || !Number.isFinite(d.comision) || d.comision < 0 || d.comision > 1000) return "La comisión tiene que estar entre 0 y 1000 €";
   if (d.email?.trim() && (d.email.trim().length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim()))) return "El correo no es válido";
   if ((d.telefono?.trim().length ?? 0) > 40) return "El teléfono es demasiado largo";
   if ((d.notas?.trim().length ?? 0) > 2000) return "Las notas son demasiado largas (máximo 2000 caracteres)";
@@ -86,7 +85,6 @@ export async function crearRrpp(d: DatosRrpp & { codigo: string }): Promise<Resu
   const { data, error } = await createAdminClient().rpc("rrpp_crear", {
     p_nombre: d.nombre.trim(),
     p_codigo: codigo,
-    p_comision: Math.round(d.comision * 100) / 100,
     p_email: d.email?.trim() || null,
     p_telefono: d.telefono?.trim() || null,
     p_notas: d.notas?.trim() || null,
@@ -115,7 +113,6 @@ export async function editarRrpp(id: string, d: DatosRrpp): Promise<Resultado> {
     .from("rrpps")
     .update({
       nombre: d.nombre.trim(),
-      comision_entrada: Math.round(d.comision * 100) / 100,
       email: d.email?.trim() || null,
       telefono: d.telefono?.trim() || null,
       notas: d.notas?.trim() || null,
@@ -159,24 +156,72 @@ export async function borrarRrpp(id: string): Promise<Resultado> {
   return { ok: true };
 }
 
-// Registra un pago: las ventas elegidas (válidas, sin pagar y de fiestas ya celebradas) menos las
-// anuladas después de pagárselas que se descuentan. Si alguna ya no está como tiene que estar, no se
-// paga nada (lo comprueba la función SQL con bloqueo).
-export async function liquidarVentas(rrppId: string, ventaIds: number[], descontarIds: number[], nota: string): Promise<Resultado<number>> {
+// Comisión de un RRPP en una discoteca: € por entrada o % del precio (null: se quita). Solo sirve
+// para calcular lo que se le paga: cambia lo calculado de sus ventas de esa discoteca aún sin pagar.
+export async function fijarComisionRrpp(
+  rrppId: string,
+  localId: string,
+  tipo: "euros" | "porcentaje" | null,
+  valor: number | null,
+): Promise<Resultado> {
+  if (!(await admin())) return { ok: false, error: "No autorizado" };
+  if (!UUID.test(String(rrppId))) return { ok: false, error: "Ese RRPP no existe" };
+  if (typeof localId !== "string" || !localId.trim() || localId.length > 100) return { ok: false, error: "Falta la discoteca" };
+  if (tipo !== null && tipo !== "euros" && tipo !== "porcentaje") return { ok: false, error: "Tipo de comisión no válido" };
+  if (tipo !== null) {
+    const max = tipo === "euros" ? 1000 : 100;
+    if (typeof valor !== "number" || !Number.isFinite(valor) || valor < 0 || valor > max || Math.round(valor * 100) / 100 !== valor) {
+      return { ok: false, error: `La comisión tiene que estar entre 0 y ${tipo === "euros" ? "1000 €" : "100 %"}, con dos decimales como mucho` };
+    }
+  }
+  const { error } = await createAdminClient().rpc("rrpp_fijar_comision", {
+    p_rrpp_id: rrppId,
+    p_local_id: localId,
+    p_tipo: tipo,
+    p_valor: tipo === null ? null : valor,
+  });
+  if (error) return { ok: false, error: errorDe(error) };
+  refrescar(rrppId);
+  return { ok: true };
+}
+
+export interface GrupoPago {
+  /** Ventas que se le pagan (en el panel, las elegidas de una discoteca) */
+  ventas: number[];
+  /** Lo que se le paga por ellas, en € */
+  importe: number;
+}
+
+// Registra un pago: por cada discoteca, las ventas elegidas (válidas, sin pagar y de fiestas ya
+// celebradas) y lo que se le paga por ellas; menos lo pagado por las anuladas después de pagárselas.
+// Si alguna ya no está como tiene que estar, no se paga nada (lo comprueba la función SQL con bloqueo).
+export async function liquidarVentas(rrppId: string, grupos: GrupoPago[], descontarIds: number[], nota: string): Promise<Resultado<number>> {
   const adminId = await admin();
   if (!adminId) return { ok: false, error: "No autorizado" };
   if (!UUID.test(String(rrppId))) return { ok: false, error: "Ese RRPP no existe" };
-  const ids = idsValidos(ventaIds);
-  const descontar = idsValidos(descontarIds);
-  if (ids.length !== new Set(ventaIds ?? []).size || descontar.length !== new Set(descontarIds ?? []).size) {
-    return { ok: false, error: "Datos del pago no válidos. Recarga la página" };
+  if (!Array.isArray(grupos) || grupos.length > 500) return { ok: false, error: "Datos del pago no válidos. Recarga la página" };
+  const pagos: GrupoPago[] = [];
+  const vistas = new Set<number>();
+  for (const g of grupos) {
+    const ventas = idsValidos(g?.ventas);
+    const importe = g?.importe;
+    if (!ventas.length || ventas.length !== new Set(g.ventas).size || ventas.some((id) => vistas.has(id))) {
+      return { ok: false, error: "Datos del pago no válidos. Recarga la página" };
+    }
+    if (typeof importe !== "number" || !Number.isFinite(importe) || importe < 0 || importe > 100000 || Math.round(importe * 100) / 100 !== importe) {
+      return { ok: false, error: "Cada importe tiene que estar entre 0 y 100.000 €, con céntimos como mucho" };
+    }
+    ventas.forEach((id) => vistas.add(id));
+    pagos.push({ ventas, importe });
   }
-  if (!ids.length && !descontar.length) return { ok: false, error: "Elige al menos una venta" };
+  const descontar = idsValidos(descontarIds);
+  if (descontar.length !== new Set(descontarIds ?? []).size) return { ok: false, error: "Datos del pago no válidos. Recarga la página" };
+  if (!pagos.length && !descontar.length) return { ok: false, error: "Elige al menos una venta" };
   const n = typeof nota === "string" ? nota.trim() : "";
   if (n.length > 300) return { ok: false, error: "La nota es demasiado larga (máximo 300 caracteres)" };
   const { data, error } = await createAdminClient().rpc("rrpp_liquidar", {
     p_rrpp_id: rrppId,
-    p_venta_ids: ids,
+    p_pagos: pagos as unknown as Json,
     p_descontar_ids: descontar,
     p_nota: n || null,
     p_admin: adminId,

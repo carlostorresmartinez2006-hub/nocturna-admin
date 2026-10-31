@@ -4,23 +4,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-// Campos de un RRPP (alta y edición)
+// Campos de un RRPP (alta y edición). La comisión no va aquí: es por discoteca y se fija en su perfil
 export interface ValoresRrpp {
   nombre: string;
-  comision: string;
   email: string;
   telefono: string;
   cuentaApp: string;
   notas: string;
 }
 
-export const valoresVacios: ValoresRrpp = { nombre: "", comision: "", email: "", telefono: "", cuentaApp: "", notas: "" };
+export const valoresVacios: ValoresRrpp = { nombre: "", email: "", telefono: "", cuentaApp: "", notas: "" };
 
-// "2,5" → 2.5; vacío o no numérico → NaN (la acción lo rechaza)
-// "2,5" o "2.50" → 2.5. Cualquier otra cosa ("2,5€", "1.000", "1e3") → NaN (y el formulario no deja guardar)
+// "2,5" o "2.50" → 2.5. Cualquier otra cosa ("2,5€", "1.000", "1e3", "-1") → NaN (y el formulario no deja
+// guardar). El máximo de cada campo lo comprueba quien la usa
 export const numeroEuros = (s: string) => {
   const t = s.trim();
-  return /^\d{1,4}([.,]\d{1,2})?$/.test(t) ? Number(t.replace(",", ".")) : NaN;
+  return /^\d{1,6}([.,]\d{1,2})?$/.test(t) ? Number(t.replace(",", ".")) : NaN;
 };
 
 export default function CamposRrpp({ v, set }: { v: ValoresRrpp; set: (v: ValoresRrpp) => void }) {
@@ -33,11 +32,6 @@ export default function CamposRrpp({ v, set }: { v: ValoresRrpp; set: (v: Valore
       <div className="space-y-1.5">
         <Label htmlFor="rrpp-nombre">Nombre *</Label>
         <Input id="rrpp-nombre" maxLength={80} required {...campo("nombre")} />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="rrpp-comision">Comisión por entrada (€) *</Label>
-        <Input id="rrpp-comision" inputMode="decimal" placeholder="2,50" required {...campo("comision")} />
-        <p className="text-xs text-muted-foreground">Lo que se le paga por cada entrada. Si se cambia, solo afecta a las ventas nuevas.</p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="rrpp-email">Correo</Label>
@@ -57,6 +51,10 @@ export default function CamposRrpp({ v, set }: { v: ValoresRrpp; set: (v: Valore
       <div className="space-y-1.5 md:col-span-2">
         <Label htmlFor="rrpp-notas">Notas</Label>
         <Textarea id="rrpp-notas" rows={2} placeholder="Cómo se le paga (Bizum, transferencia…), acuerdos…" {...campo("notas")} />
+        <p className="text-xs text-muted-foreground">
+          No hace falta poner una comisión: en su perfil verás cuántas entradas ha vendido en cada discoteca y, si quieres, podrás fijarle una
+          comisión por discoteca para que el panel te calcule lo que le toca.
+        </p>
       </div>
     </div>
   );

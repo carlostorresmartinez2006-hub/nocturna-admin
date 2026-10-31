@@ -19,6 +19,8 @@ export interface PagoFila {
   por: string | null;
   deshecha: string | null;
   deshechaPor: string | null;
+  /** Lo pagado por cada discoteca (vacío si está deshecho) */
+  detalle: { discoteca: string; entradas: number; importe: number }[];
 }
 
 function Deshacer({ rrppId, pago }: { rrppId: string; pago: PagoFila }) {
@@ -53,6 +55,7 @@ export default function Pagos({ rrppId, pagos }: { rrppId: string; pagos: PagoFi
             <th className="text-left font-medium px-2 py-2">Fecha</th>
             <th className="text-right font-medium px-2 py-2">Ventas</th>
             <th className="text-right font-medium px-2 py-2">Importe</th>
+            <th className="text-left font-medium px-2 py-2">Por discoteca</th>
             <th className="text-left font-medium px-2 py-2">Nota</th>
             <th className="text-left font-medium px-2 py-2">Marcado por</th>
             <th />
@@ -68,6 +71,15 @@ export default function Pagos({ rrppId, pagos }: { rrppId: string; pagos: PagoFi
                 {p.numDescontadas ? <span className="block text-xs text-muted-foreground">−{p.numDescontadas} descontadas</span> : null}
               </td>
               <td className={`px-2 py-2 text-right font-medium ${p.deshecha ? "line-through" : ""}`}>{euros(p.importe)}</td>
+              <td className="px-2 py-2 text-xs text-muted-foreground">
+                {p.detalle.length
+                  ? p.detalle.map((d, i) => (
+                      <span key={i} className="block">
+                        {d.discoteca}: {d.entradas} {d.entradas === 1 ? "entrada" : "entradas"} · {euros(d.importe)}
+                      </span>
+                    ))
+                  : "—"}
+              </td>
               <td className="px-2 py-2 text-muted-foreground">{p.nota ?? "—"}</td>
               <td className="px-2 py-2 text-muted-foreground">{p.por ?? "—"}</td>
               <td className="px-2 py-2 text-right">
