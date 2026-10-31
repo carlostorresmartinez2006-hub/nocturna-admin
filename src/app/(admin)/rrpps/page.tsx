@@ -42,8 +42,10 @@ export default async function RrppsPage() {
 
   const porId = new Map((resumen ?? []).map((r) => [r.rrpp_id, r]));
   const lista = (rrpps ?? []).map((p) => ({ ...p, r: porId.get(p.id) }));
-  const suma = (k: "pendiente_euros" | "pagable_euros" | "pagado_euros" | "a_descontar_euros" | "ventas" | "pendientes") =>
+  const suma = (k: "pendiente_calculado" | "pendientes_sin_comision" | "pagables" | "pagado_euros" | "a_descontar_euros" | "ventas" | "pendientes") =>
     lista.reduce((s, x) => s + Number(x.r?.[k] ?? 0), 0);
+  // Lo calculado solo se enseña si alguna pendiente tiene comisión fijada
+  const calculado = (pendientes: number, sinComision: number, euro: number) => (pendientes > sinComision ? ` · ${euros(euro)} calculado` : "");
 
   return (
     <div className="p-8 space-y-6">
@@ -54,15 +56,20 @@ export default async function RrppsPage() {
         <p className="text-muted-foreground text-sm mt-1">
           Relaciones públicas de Nocturna. Cada entrada que se compra en la app con su código suma una venta cuando la compra se ha pagado de
           verdad (la lee el robot de ventas de Fourvenues o la confirma el pago dentro de la app). Las listas gratis, las compras del propio RRPP
-          y las entradas anuladas no cuentan.
+          y las entradas anuladas no cuentan. En el perfil de cada uno ves lo que ha vendido en cada discoteca y le pagas según lo que te pague
+          cada discoteca (o con la comisión que le fijes en cada una).
         </p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Pendiente de pagar", value: euros(suma("pendiente_euros")), sub: `${suma("pendientes")} ventas · ${euros(suma("pagable_euros"))} ya se pueden pagar` },
+          {
+            label: "Entradas sin pagar",
+            value: suma("pendientes"),
+            sub: `${suma("pagables")} ya se pueden pagar${calculado(suma("pendientes"), suma("pendientes_sin_comision"), suma("pendiente_calculado"))}`,
+          },
           { label: "Pagado en total", value: euros(suma("pagado_euros")) },
-          { label: "Ventas válidas", value: suma("ventas") },
+          { label: "Entradas vendidas", value: suma("ventas") },
           { label: "A descontar (anuladas tras pagar)", value: euros(suma("a_descontar_euros")), alerta: suma("a_descontar_euros") > 0 },
         ].map(({ label, value, sub, alerta }) => (
           <Card key={label} className={alerta ? "border-amber-500/40" : undefined}>
@@ -110,9 +117,9 @@ export default async function RrppsPage() {
                   <tr className="border-b border-border text-xs text-muted-foreground">
                     <th className="text-left font-medium px-4 py-3">RRPP</th>
                     <th className="text-left font-medium px-4 py-3">Código</th>
-                    <th className="text-right font-medium px-4 py-3">Comisión / entrada</th>
-                    <th className="text-right font-medium px-4 py-3">Ventas</th>
-                    <th className="text-right font-medium px-4 py-3">Pendiente</th>
+                    <th className="text-right font-medium px-4 py-3">Discotecas</th>
+                    <th className="text-right font-medium px-4 py-3">Vendidas</th>
+                    <th className="text-right font-medium px-4 py-3">Sin pagar</th>
                     <th className="text-right font-medium px-4 py-3">Pagado</th>
                     <th className="text-left font-medium px-4 py-3">Última venta</th>
                     <th />
@@ -127,13 +134,16 @@ export default async function RrppsPage() {
                         {p.email && <p className="text-xs text-muted-foreground">{p.email}</p>}
                       </td>
                       <td className="px-4 py-3 font-mono font-semibold">{p.codigo}</td>
-                      <td className="px-4 py-3 text-right">{euros(Number(p.comision_entrada))}</td>
+                      <td className="px-4 py-3 text-right">{p.r?.discotecas ?? 0}</td>
                       <td className="px-4 py-3 text-right">{p.r?.ventas ?? 0}</td>
                       <td className="px-4 py-3 text-right">
                         <span className={(p.r?.pendientes ?? 0) > 0 ? "font-semibold text-primary" : "text-muted-foreground"}>
-                          {euros(Number(p.r?.pendiente_euros ?? 0))}
+                          {p.r?.pendientes ?? 0} {(p.r?.pendientes ?? 0) === 1 ? "entrada" : "entradas"}
                         </span>
-                        <span className="block text-xs text-muted-foreground">{p.r?.pendientes ?? 0} ventas · {euros(Number(p.r?.pagable_euros ?? 0))} ya</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {p.r?.pagables ?? 0} ya
+                          {calculado(p.r?.pendientes ?? 0, p.r?.pendientes_sin_comision ?? 0, Number(p.r?.pendiente_calculado ?? 0))}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right">{euros(Number(p.r?.pagado_euros ?? 0))}</td>
                       <td className="px-4 py-3 text-muted-foreground">{fecha(p.r?.ultima_venta ?? null)}</td>

@@ -1006,7 +1006,6 @@ export type Database = {
         Row: {
           activo: boolean
           codigo: string
-          comision_entrada: number
           created_at: string
           desactivado_at: string | null
           email: string | null
@@ -1020,7 +1019,6 @@ export type Database = {
         Insert: {
           activo?: boolean
           codigo: string
-          comision_entrada?: number
           created_at?: string
           desactivado_at?: string | null
           email?: string | null
@@ -1034,7 +1032,6 @@ export type Database = {
         Update: {
           activo?: boolean
           codigo?: string
-          comision_entrada?: number
           created_at?: string
           desactivado_at?: string | null
           email?: string | null
@@ -1103,7 +1100,8 @@ export type Database = {
           anulada_origen: boolean
           anulada_robot: boolean
           atribucion_id: number | null
-          comision: number
+          /** Lo calculado con la comisión de su discoteca (null: sin comisión fijada) */
+          comision: number | null
           created_at: string
           descontada_en: number | null
           estado: "valida" | "anulada" | "excluida"
@@ -1115,9 +1113,13 @@ export type Database = {
           fv_evento_id: string | null
           id: number
           liquidacion_id: number | null
+          local_id: string | null
+          local_nombre: string | null
           manual: boolean
           motivo: string | null
           origen: "web" | "app"
+          /** Lo que se le pagó por ella (al registrar el pago) */
+          pagado: number | null
           precio: number | null
           ref: string
           rrpp_id: string
@@ -1130,7 +1132,7 @@ export type Database = {
           anulada_aviso?: boolean
           anulada_robot?: boolean
           atribucion_id?: number | null
-          comision: number
+          comision?: number | null
           created_at?: string
           descontada_en?: number | null
           estado?: "valida" | "anulada" | "excluida"
@@ -1155,7 +1157,7 @@ export type Database = {
           anulada_aviso?: boolean
           anulada_robot?: boolean
           atribucion_id?: number | null
-          comision?: number
+          comision?: number | null
           created_at?: string
           descontada_en?: number | null
           estado?: "valida" | "anulada" | "excluida"
@@ -1177,6 +1179,12 @@ export type Database = {
         }
         Relationships: []
       }
+      rrpp_comisiones: {
+        Row: { actualizado_at: string; local_id: string; rrpp_id: string; tipo: "euros" | "porcentaje"; valor: number }
+        Insert: { actualizado_at?: string; local_id: string; rrpp_id: string; tipo: "euros" | "porcentaje"; valor: number }
+        Update: { actualizado_at?: string; local_id?: string; rrpp_id?: string; tipo?: "euros" | "porcentaje"; valor?: number }
+        Relationships: []
+      }
       rrpp_errores: {
         Row: { created_at: string; error: string; id: number; origen: string; ref: string | null }
         Insert: { created_at?: string; error: string; origen: string; ref?: string | null }
@@ -1190,15 +1198,42 @@ export type Database = {
           a_descontar: number
           a_descontar_euros: number
           anuladas: number
+          discotecas: number
           excluidas: number
           facturado_euros: number
-          pagable_euros: number
+          pagable_calculado: number
           pagables: number
+          pagables_sin_comision: number
           pagadas: number
           pagado_euros: number
-          pendiente_euros: number
+          pendiente_calculado: number
+          pendiente_facturado: number
           pendientes: number
+          pendientes_sin_comision: number
           personas: number
+          rrpp_id: string
+          ultima_venta: string | null
+          ventas: number
+        }
+        Relationships: []
+      }
+      rrpp_por_local: {
+        Row: {
+          a_descontar: number
+          a_descontar_euros: number
+          facturado: number
+          local_id: string | null
+          local_nombre: string | null
+          pagable_calculado: number
+          pagable_facturado: number
+          pagables: number
+          pagables_sin_comision: number
+          pagadas: number
+          pagado: number
+          pendiente_calculado: number
+          pendiente_facturado: number
+          pendientes: number
+          pendientes_sin_comision: number
           rrpp_id: string
           ultima_venta: string | null
           ventas: number
@@ -1207,11 +1242,12 @@ export type Database = {
       }
       rrpp_por_fiesta: {
         Row: {
-          comision: number
+          comision: number | null
           evento_id: string | null
           evento_inicio: string | null
           evento_titulo: string | null
           facturado: number
+          local_nombre: string | null
           rrpp_id: string
           ventas: number
         }
@@ -1223,7 +1259,6 @@ export type Database = {
         Args: {
           p_nombre: string
           p_codigo: string
-          p_comision: number
           p_email?: string | null
           p_telefono?: string | null
           p_notas?: string | null
@@ -1234,8 +1269,13 @@ export type Database = {
       rrpp_cambiar_codigo: { Args: { p_rrpp_id: string; p_codigo: string }; Returns: string }
       rrpp_activar: { Args: { p_rrpp_id: string; p_activo: boolean }; Returns: undefined }
       rrpp_borrar: { Args: { p_rrpp_id: string }; Returns: undefined }
+      rrpp_fijar_comision: {
+        Args: { p_rrpp_id: string; p_local_id: string; p_tipo: "euros" | "porcentaje" | null; p_valor: number | null }
+        Returns: undefined
+      }
       rrpp_liquidar: {
-        Args: { p_rrpp_id: string; p_venta_ids: number[]; p_descontar_ids: number[]; p_nota: string | null; p_admin: string }
+        /** p_pagos: [{ ventas: ids, importe: € }], uno por discoteca */
+        Args: { p_rrpp_id: string; p_pagos: Json; p_descontar_ids: number[]; p_nota: string | null; p_admin: string }
         Returns: number
       }
       rrpp_deshacer_liquidacion: { Args: { p_rrpp_id: string; p_liquidacion_id: number; p_admin: string }; Returns: undefined }

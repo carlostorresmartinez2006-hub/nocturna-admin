@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { activarRrpp, borrarRrpp, cambiarCodigoRrpp, editarRrpp } from "@/app/actions/rrpps";
-import CamposRrpp, { numeroEuros, type ValoresRrpp } from "../CamposRrpp";
+import CamposRrpp, { type ValoresRrpp } from "../CamposRrpp";
 
 interface Props {
   rrpp: {
     id: string;
     nombre: string;
-    comision: number;
     email: string | null;
     telefono: string | null;
     notas: string | null;
@@ -31,7 +30,6 @@ export default function EditarRrpp({ rrpp, codigos }: Props) {
   const router = useRouter();
   const [v, setV] = useState<ValoresRrpp>({
     nombre: rrpp.nombre,
-    comision: String(rrpp.comision).replace(".", ","),
     email: rrpp.email ?? "",
     telefono: rrpp.telefono ?? "",
     cuentaApp: rrpp.cuentaApp,
@@ -59,7 +57,7 @@ export default function EditarRrpp({ rrpp, codigos }: Props) {
     // La cuenta de la app solo se manda si se ha cambiado (si no, se queda la que tenga vinculada)
     const cuentaApp = v.cuentaApp.trim() === rrpp.cuentaApp.trim() ? undefined : v.cuentaApp;
     if (cuentaApp !== undefined && !cuentaApp.trim() && rrpp.cuentaApp && !confirm("¿Desvincular su cuenta de la app? Sus propias compras pasarán a contar como ventas suyas.")) return;
-    ejecutar(() => editarRrpp(rrpp.id, { ...v, cuentaApp, comision: numeroEuros(v.comision) }), "Datos guardados");
+    ejecutar(() => editarRrpp(rrpp.id, { ...v, cuentaApp }), "Datos guardados");
   };
 
   const cambiar = (e: React.FormEvent) => {
